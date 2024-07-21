@@ -9,7 +9,7 @@ namespace s2ProtocolFurry.Decoder
     {        
         private readonly EventDecoder _eventDecoder;
         private readonly MPQArchive.MPQ.ReceivedData.MPQArchive _mpqArchive;
-        private List<KeyValuePair<string, object>> _typeInfos;
+        private List<ProtocolTypeInfo> _typeInfos;
 
         public Sc2ReplayDecoder(string path)
         {                        
@@ -19,9 +19,9 @@ namespace s2ProtocolFurry.Decoder
 
             _mpqArchive = mpqReader.Read();
             _eventDecoder = new EventDecoder();
-           
-            var protocol = new Protocol92440();
-            _typeInfos = protocol.TypeInfos;
+
+            var protocolTypeInfoParser = new ProtocolTypeInfoParser();
+            _typeInfos = protocolTypeInfoParser.ParseProtocolTypes("protocol92440");
         }
         public Dictionary<string, object> DecodeReplayHeader()
         {

@@ -1,14 +1,14 @@
 ﻿using s2ProtocolFurry.Decoders;
-using System.Reflection;
+using s2ProtocolFurry.Protocol;
 
 namespace s2ProtocolFurry.Decoder
 {
-    public class VersionedDecoder : IDecoder
+    public class VersionedDecoder : BaseDecoder, IDecoder
     {
         private readonly BitPackedBuffer _buffer;
-        private readonly List<KeyValuePair<string, object>> _typeInfos;
+        private readonly List<ProtocolTypeInfo> _typeInfos;
 
-        public VersionedDecoder(byte[] contents, List<KeyValuePair<string, object>> typeInfos)
+        public VersionedDecoder(byte[] contents, List<ProtocolTypeInfo> typeInfos)
         {
             _buffer = new BitPackedBuffer(contents);
             _typeInfos = typeInfos;
@@ -24,16 +24,28 @@ namespace s2ProtocolFurry.Decoder
             }
 
             var typeInfo = _typeInfos[typeId];
-            var methodName = typeInfo.Key;
-            var parameters = (object[])typeInfo.Value;
+            var methodName = typeInfo.Type;
+            var parameters = typeInfo.Arguments;
 
-            var method = GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-            if (method == null)
+            var toString = typeInfo.ToString();          
+            var result = methodName switch
             {
-                throw new InvalidOperationException($"Method {methodName} not found");
-            }
+                "_array" => Array((int)parameters[0], (int)parameters[1]),
+                "_bitarray" => BitArray((int)parameters[0]),
+                "_blob" => Blob((int)parameters[0]),
+                "_bool" => Bool(),
+                "_choice" => Choice((int)parameters[0], (int)parameters[1], CastToDictionaryIntTupleStringInt(parameters[2])),
+                "_fourcc" => FourCC(),
+                "_int" => Int((int)parameters[0]),
+                "_null" => Null(),
+                "_optional" => Optional((int)parameters[0]),
+                "_real32" => Real32(),
+                "_real64" => Real64(),
+                "_struct" => Struct(ConvertToListOfTuples(parameters)),
+                _ => throw new InvalidOperationException($"Unknown method '{methodName}'")
+            };
 
-            return method.Invoke(this, parameters)!;
+            return result;
         }
 
         public void ByteAlign() => _buffer.ByteAlign();
@@ -96,23 +108,18 @@ namespace s2ProtocolFurry.Decoder
             ExpectSkip(6);
             return _buffer.ReadBits(8) != 0;
         }
-
-        private Dictionary<string, object> Choice(int bounds, List<Tuple<string, int>> fields)
+        
+        private Dictionary<string, object> Choice(int mix, int max, Dictionary<int, Tuple<string, int>> fields)
         {
             ExpectSkip(3);
             int tag = VInt();
-            var field = fields.FirstOrDefault(f => f.Item2 == tag);
-            if (field == null)
+            if (!fields.ContainsKey(tag))
             {
                 SkipInstance();
                 return new Dictionary<string, object>();
             }
-
-            var result = new Dictionary<string, object>
-            {
-                [field.Item1] = Instance(field.Item2)
-            };
-            return result;
+            var field = fields[tag];
+            return new Dictionary<string, object> { { field.Item1, Instance(field.Item2) } };
         }
 
         private byte[] FourCC()

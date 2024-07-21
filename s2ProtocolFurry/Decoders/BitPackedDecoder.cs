@@ -1,4 +1,5 @@
 ﻿using s2ProtocolFurry.Decoder;
+using s2ProtocolFurry.Protocol;
 using System.Collections;
 using System.Reflection;
 
@@ -7,9 +8,9 @@ namespace s2ProtocolFurry.Decoders;
 public class BitPackedDecoder : IDecoder
 {
     private readonly BitPackedBuffer _buffer;
-    private readonly List<KeyValuePair<string, object>> _typeInfos;
+    private readonly List<ProtocolTypeInfo> _typeInfos;
 
-    public BitPackedDecoder(byte[] contents, List<KeyValuePair<string, object>> typeInfos)
+    public BitPackedDecoder(byte[] contents, List<ProtocolTypeInfo> typeInfos)
     {
         _buffer = new BitPackedBuffer(contents);
         _typeInfos = typeInfos;
@@ -28,8 +29,8 @@ public class BitPackedDecoder : IDecoder
         }
 
         var typeInfo = _typeInfos[typeId];
-        var methodName = typeInfo.Key;
-        var parameters = (object[])typeInfo.Value;
+        var methodName = typeInfo.Type;
+        var parameters = typeInfo.Arguments;
 
         var method = GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
         if (method == null)

@@ -17,7 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CastClassToStruct\MPQArchive.csproj" />
     <ProjectReference Include="..\MPQArchive\MPQArchive.csproj" />
   </ItemGroup>
 

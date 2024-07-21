@@ -29,16 +29,17 @@ namespace s2ProtocolFurry.Decoder
         public Sc2Replay DecodeSc2Replay()
         {
             var replay = new Sc2Replay(_path);
+            var replayHeader = DecodeReplayHeader();
 
             var initData = DecodeReplayInitData();
             replay.InitData = Parse.Parse.InitData(initData);
 
-            var replayDetails = DecodeReplayDetails();
-            replay.Details = Parse.Parse.Details(replayDetails);
-
             var trackerEvents = DecodeReplayTrackerEvents();
             replay.TrackerEvents = Parse.Parse.Tracker(trackerEvents);
 
+            var replayDetails = DecodeReplayDetails();
+            replay.Details = Parse.Parse.Details(replayDetails);
+            
             var gameEvents = DecodeReplayGameEvents();
             replay.GameEvents = Parse.Parse.GameEvents(gameEvents);
 

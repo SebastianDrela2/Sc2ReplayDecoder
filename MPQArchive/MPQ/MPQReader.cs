@@ -102,7 +102,6 @@ namespace MPQArchive.MPQ
             };
 
             byte[] content = _reader.ReadBytes((int)userDataSize);
-
             mpqUserData.Content = content;
 
             var mpqHeaderPosition = baseOffset + mpqUserData.HeaderPosition;

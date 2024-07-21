@@ -90,18 +90,32 @@ namespace MPQArchive.MPQ
 
         private MPQUserData ReadUserData(ref long baseOffset)
         {
-            // Read the initial header data
+            //Read the initial header data
             var userDataSize = _reader.ReadUInt32();
             var headerPosition = _reader.ReadUInt32();
+            var userDataHeaderSize = _reader.ReadUInt32();
 
             // Create an MPQUserData object with the read values
             var mpqUserData = new MPQUserData
             {
                 UserDataSize = userDataSize,
-                HeaderPosition = headerPosition
+                HeaderPosition = headerPosition,
+                UserDataHeaderSize = userDataHeaderSize
             };
 
-            byte[] content = _reader.ReadBytes((int)userDataSize);
+            //byte[] headerData = _reader.ReadBytes(16);
+
+            //// Create an MPQUserDataHeader object
+            //MPQUserData mpqUserData = new MPQUserData
+            //{
+            //    Magic = BitConverter.ToUInt32(headerData, 0),
+            //    UserDataSize = BitConverter.ToUInt32(headerData, 4),
+            //    HeaderPosition = BitConverter.ToUInt32(headerData, 8),
+            //    UserDataHeaderSize = BitConverter.ToUInt32(headerData, 12)
+            //};
+
+            //// Read the content based on the header size
+            byte[] content = _reader.ReadBytes((int)mpqUserData.UserDataHeaderSize);
             mpqUserData.Content = content;
 
             var mpqHeaderPosition = baseOffset + mpqUserData.HeaderPosition;

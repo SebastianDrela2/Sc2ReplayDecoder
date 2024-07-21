@@ -6,4 +6,6 @@ public class MPQUserData
     public uint UserDataSize;         // Maximum size of the user data
     public uint HeaderPosition;       // Position of the MPQ header, relative to the begin of the shunt 
     public byte[] Content;
-}
+
+    public uint UserDataHeaderSize { get; internal set; }
+}    

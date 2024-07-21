@@ -55,7 +55,9 @@ namespace s2ProtocolFurry.Decoder
 
         private void ExpectSkip(int expected)
         {
-            if (_buffer.ReadBits(8) != expected)
+            var bits = _buffer.ReadBits(8);
+
+            if (bits != expected)
             {
                 throw new InvalidOperationException("Corrupted data");
             }
@@ -165,6 +167,12 @@ namespace s2ProtocolFurry.Decoder
             {
                 int tag = VInt();
                 var field = fields.FirstOrDefault(f => f.Item3 == tag);
+
+                if (field is null)
+                {
+
+                }
+
                 if (field != null)
                 {
                     if (field.Item1 == "__parent")

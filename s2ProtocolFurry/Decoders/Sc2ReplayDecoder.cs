@@ -6,10 +6,12 @@ using s2ProtocolFurry.Protocol;
 namespace s2ProtocolFurry.Decoder
 {
     public class Sc2ReplayDecoder
-    {        
+    {               
+        private readonly ProtocolImporter _protocolImporter;
         private readonly EventDecoder _eventDecoder;
-        private readonly MPQArchive.MPQ.ReceivedData.MPQArchive _mpqArchive;
+        private readonly MPQArchive.MPQ.ReceivedData.MPQArchive _mpqArchive;              
         private readonly string _path;
+
         private List<ProtocolTypeInfo> _typeInfos;
 
         public Sc2ReplayDecoder(string path)
@@ -21,15 +23,20 @@ namespace s2ProtocolFurry.Decoder
 
             _mpqArchive = mpqReader.Read();
             _eventDecoder = new EventDecoder();
+            _protocolImporter = new ProtocolImporter(@"C:\Users\Seba\source\repos\ParasiteReplayAnalyzer\s2protocol.NET\libs2\s2protocol\versions");
 
-            var protocolTypeInfoParser = new ProtocolTypeInfoParser();
-            _typeInfos = protocolTypeInfoParser.ParseProtocolTypes("protocol92440");
+            _typeInfos = _protocolImporter.GetTypeInfos();
         }
 
         public Sc2Replay DecodeSc2Replay()
         {
             var replay = new Sc2Replay(_path);
             var replayHeader = DecodeReplayHeader();
+
+            var version = replayHeader["m_version"] as Dictionary<string, object>;
+            var baseBuild = version["m_baseBuild"];
+
+            _typeInfos = _protocolImporter.GetTypeInfos((int)baseBuild);
 
             var initData = DecodeReplayInitData();
             replay.InitData = Parse.Parse.InitData(initData);

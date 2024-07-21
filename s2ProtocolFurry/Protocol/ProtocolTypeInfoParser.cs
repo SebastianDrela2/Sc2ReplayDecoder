@@ -5,9 +5,8 @@ namespace s2ProtocolFurry.Protocol;
 
 public class ProtocolTypeInfoParser
 {
-    public List<ProtocolTypeInfo> ParseProtocolTypes(string protocolName)
-    {
-        var input = ReadProtocol(protocolName);
+    public List<ProtocolTypeInfo> ParseProtocolTypes(string input)
+    {       
         var protocolTypes = new List<ProtocolTypeInfo>();
         var matches = Regex.Matches(input, @"\('(?<type>_int|_choice|_struct|_blob|_array|_optional|_bool|_fourcc|_bitarray|_null)',\[(?<args>.*?)\]\)(,?\s*#\d+)?");
 

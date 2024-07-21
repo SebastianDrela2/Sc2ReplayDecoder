@@ -50,17 +50,12 @@
             return result;
         }
 
-        public int ReadBits(int count)
+        public int ReadBits(int bits)
         {
-            if (count < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(count));
-            }
-
             int result = 0;
-            int resultBits = 0;
+            int resultbits = 0;
 
-            while (resultBits != count)
+            while (resultbits != bits)
             {
                 if (_nextBits == 0)
                 {
@@ -68,26 +63,24 @@
                     {
                         throw new TruncatedError();
                     }
+
                     _next = _data[_used];
-                    _used++;
+                    _used += 1;
                     _nextBits = 8;
                 }
-
-                int copyBits = Math.Min(count - resultBits, _nextBits);
-                int copy = _next & ((1 << copyBits) - 1);
-
+                int copybits = Math.Min(bits - resultbits, _nextBits);
+                int copy = (_next & ((1 << copybits) - 1));
                 if (_bigEndian)
                 {
-                    result |= copy << (count - resultBits - copyBits);
+                    result |= copy << (bits - resultbits - copybits);
                 }
                 else
                 {
-                    result |= copy << resultBits;
+                    result |= copy << resultbits;
                 }
-
-                _next >>= copyBits;
-                _nextBits -= copyBits;
-                resultBits += copyBits;
+                _next >>= copybits;
+                _nextBits -= copybits;
+                resultbits += copybits;
             }
 
             return result;

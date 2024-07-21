@@ -1,0 +1,22 @@
+# Ignore common build artifacts
+bin/
+obj/
+
+# Ignore other common files
+*.log
+*.tmp
+
+# Ignore IDE-specific files
+.idea/
+*.iml
+
+# Ignore other potential IDE or editor folders
+*.vscode/
+*.code-workspace
+
+# Ignore Visual Studio directory and solution files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln

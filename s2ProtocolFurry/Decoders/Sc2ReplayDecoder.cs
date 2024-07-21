@@ -23,10 +23,27 @@ namespace s2ProtocolFurry.Decoder
             var protocol = new Protocol92440();
             _typeInfos = protocol.TypeInfos;
         }
+        public Dictionary<string, object> DecodeReplayHeader()
+        {
+            var decoder = new VersionedDecoder(_mpqArchive.MPQUserData.Content, _typeInfos);
+            return (Dictionary<string, object>)decoder.Instance(EventMappedTypes.ReplayHeaderTypeId);
+        }
+
+        public Dictionary<string, object> DecodeReplayDetails()
+        {
+            var decoder = new VersionedDecoder(GetListItemContent("replay.details.backup"), _typeInfos);
+            return (Dictionary<string, object>)decoder.Instance(EventMappedTypes.GameDetailsTypeId);
+        }
+
+        public Dictionary<string, object> DecodeReplayInitData()
+        {
+            var decoder = new BitPackedDecoder(GetListItemContent("replay.initData"), _typeInfos);
+            return (Dictionary<string, object>)decoder.Instance(EventMappedTypes.ReplayInitDataTypeId);
+        }
 
         public IEnumerable<Dictionary<string, object>> DecodeReplayGameEvents()
         {
-            var decoder = new BitPackedDecoder(_mpqArchive.MPQUserData.Content, _typeInfos);
+            var decoder = new BitPackedDecoder(GetListItemContent("replay.game.events"), _typeInfos);
             foreach (var eventItem in _eventDecoder.DecodeEventStream(
                 decoder, EventMappedTypes.GameEventIdTypeId, EventMappedTypes.GameEventMappedTypes, true))
             {
@@ -36,7 +53,7 @@ namespace s2ProtocolFurry.Decoder
 
         public IEnumerable<Dictionary<string, object>> DecodeReplayMessageEvents()
         {
-            var decoder = new BitPackedDecoder(_mpqArchive.MPQUserData.Content, _typeInfos);
+            var decoder = new BitPackedDecoder(GetListItemContent("replay.message.events"), _typeInfos);
             foreach (var eventItem in _eventDecoder.DecodeEventStream(
                 decoder, EventMappedTypes.MessageEventIdTypeId, EventMappedTypes.MessageEventTypes, true))
             {
@@ -46,32 +63,14 @@ namespace s2ProtocolFurry.Decoder
 
         public IEnumerable<Dictionary<string, object>> DecodeReplayTrackerEvents()
         {
-            var decoder = new VersionedDecoder(_mpqArchive.MPQUserData.Content, _typeInfos);
+            var decoder = new VersionedDecoder(GetListItemContent("replay.tracker.events"), _typeInfos);
             foreach (var eventItem in _eventDecoder.DecodeEventStream(
                 decoder, EventMappedTypes.TrackerEventIdTypeId, EventMappedTypes.TrackedEventMappedTypes, false))
             {
                 yield return eventItem;
             }
         }
-
-        public Dictionary<string, object> DecodeReplayHeader()
-        {
-            var decoder = new VersionedDecoder(_mpqArchive.MPQUserData.Content, _typeInfos);
-            return (Dictionary<string, object>)decoder.Instance(EventMappedTypes.ReplayHeaderTypeId);
-        }
-
-        public Dictionary<string, object> DecodeReplayDetails()
-        {
-            var decoder = new VersionedDecoder(_mpqArchive.MPQUserData.Content, _typeInfos);
-            return (Dictionary<string, object>)decoder.Instance(EventMappedTypes.GameDetailsTypeId);
-        }
-
-        public Dictionary<string, object> DecodeReplayInitData()
-        {
-            var decoder = new BitPackedDecoder(_mpqArchive.MPQUserData.Content, _typeInfos);
-            return (Dictionary<string, object>)decoder.Instance(EventMappedTypes.ReplayInitDataTypeId);
-        }
-
+        
         private byte[] GetListItemContent(string listItemFile)
         {
             return _mpqArchive.ListingFiles.First(x => x.Key == listItemFile).Value;

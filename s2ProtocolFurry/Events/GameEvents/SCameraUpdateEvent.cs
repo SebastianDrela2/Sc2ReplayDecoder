@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class SCameraUpdateEvent
+    internal class SCameraUpdateEvent : GameEvent
     {
-        public SCameraUpdateEvent(GameEvent gameEvent, string? reason, int? distance, long? targetX, long? targetY, int? yaw, int? pitch, bool follow)
+        public SCameraUpdateEvent(GameEvent gameEvent, string? reason, int? distance, long? targetX, long? targetY, int? yaw, int? pitch, bool follow) : base(gameEvent)
         {
             GameEvent = gameEvent;
             Reason = reason;

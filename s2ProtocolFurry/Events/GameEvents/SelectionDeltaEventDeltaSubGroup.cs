@@ -1,4 +1,6 @@
-﻿namespace s2ProtocolFurry.Events.GameEvents
+﻿using s2ProtocolFurry.NNetGame;
+
+namespace s2ProtocolFurry.Events.GameEvents
 {
     internal class SelectionDeltaEventDeltaSubGroup
     {

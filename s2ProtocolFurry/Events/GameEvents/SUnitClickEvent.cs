@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class SUnitClickEvent
+    internal class SUnitClickEvent : GameEvent
     {
-        public SUnitClickEvent(GameEvent gameEvent, int unitTag)
+        public SUnitClickEvent(GameEvent gameEvent, int unitTag) : base(gameEvent)
         {
             GameEvent = gameEvent;
             UnitTag = unitTag;

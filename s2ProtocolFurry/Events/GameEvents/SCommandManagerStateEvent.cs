@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class SCommandManagerStateEvent
+    internal class SCommandManagerStateEvent : GameEvent
     {
-        public SCommandManagerStateEvent(GameEvent gameEvent, int state, int? sequence)
+        public SCommandManagerStateEvent(GameEvent gameEvent, int state, int? sequence) : base(gameEvent)
         {
             GameEvent = gameEvent;
             State = state;

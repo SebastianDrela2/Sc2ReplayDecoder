@@ -2,9 +2,9 @@
 
 namespace s2ProtocolFurry.Parse
 {
-    internal class STriggerMouseClickedEvent
+    public class STriggerMouseClickedEvent : GameEvent
     {
-        public STriggerMouseClickedEvent(GameEvent gameEvent, bool down, int button, int flags, long posX, long posY)
+        public STriggerMouseClickedEvent(GameEvent gameEvent, bool down, int button, int flags, long posX, long posY) : base(gameEvent)
         {
             GameEvent = gameEvent;
             Down = down;

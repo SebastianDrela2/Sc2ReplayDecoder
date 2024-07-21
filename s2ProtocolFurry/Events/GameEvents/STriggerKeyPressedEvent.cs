@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class STriggerKeyPressedEvent
+    internal class STriggerKeyPressedEvent : GameEvent
     {
-        public STriggerKeyPressedEvent(GameEvent gameEvent, int flags, int key)
+        public STriggerKeyPressedEvent(GameEvent gameEvent, int flags, int key) : base(gameEvent)
         {
             GameEvent = gameEvent;
             Flags = flags;

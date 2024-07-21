@@ -1,8 +1,8 @@
-﻿namespace s2ProtocolFurry.Models.GameEvents
+﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class UnknownGameEvent
+    internal class UnknownGameEvent : GameEvent
     {
-        public UnknownGameEvent(GameEvent gameEvent, string eventObj)
+        public UnknownGameEvent(GameEvent gameEvent, string eventObj) : base(gameEvent)
         {
             GameEvent = gameEvent;
             Event = eventObj;

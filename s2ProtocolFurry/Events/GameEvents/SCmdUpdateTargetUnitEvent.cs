@@ -1,7 +1,6 @@
-﻿using s2ProtocolFurry.Models.GameEvents;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace s2ProtocolFurry.Parse
+namespace s2ProtocolFurry.Events.GameEvents
 {
     public class SCmdUpdateTargetUnitEvent : GameEvent
     {

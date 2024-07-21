@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class SSetSyncPlayingTimeEvent
+    internal class SSetSyncPlayingTimeEvent : GameEvent
     {
-        public SSetSyncPlayingTimeEvent(GameEvent gameEvent, int syncTime)
+        public SSetSyncPlayingTimeEvent(GameEvent gameEvent, int syncTime) : base(gameEvent)
         {
             GameEvent = gameEvent;
             SyncTime = syncTime;

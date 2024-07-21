@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class STriggerPingEvent
+    internal class STriggerPingEvent : GameEvent
     {
-        public STriggerPingEvent(GameEvent gameEvent, bool pingedMinimap, int unitLink, bool unitIsUnderConstruction, long option, int unit, long unitX, long unitY, long unitZ, int? unitControlPlayerId, long pointX, long pointY, int? unitUpkeepPlayerId)
+        public STriggerPingEvent(GameEvent gameEvent, bool pingedMinimap, int unitLink, bool unitIsUnderConstruction, long option, int unit, long unitX, long unitY, long unitZ, int? unitControlPlayerId, long pointX, long pointY, int? unitUpkeepPlayerId) : base(gameEvent)
         {
             GameEvent = gameEvent;
             PingedMinimap = pingedMinimap;

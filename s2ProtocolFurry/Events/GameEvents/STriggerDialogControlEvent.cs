@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class STriggerDialogControlEvent
+    internal class STriggerDialogControlEvent : GameEvent
     {
-        public STriggerDialogControlEvent(GameEvent gameEvent, long controlId, int? mouseButton, string? textChanged, long eventType)
+        public STriggerDialogControlEvent(GameEvent gameEvent, long controlId, int? mouseButton, string? textChanged, long eventType) : base(gameEvent)
         {
             GameEvent = gameEvent;
             ControlId = controlId;

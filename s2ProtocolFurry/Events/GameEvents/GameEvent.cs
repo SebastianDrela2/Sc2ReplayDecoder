@@ -1,11 +1,11 @@
-﻿namespace s2ProtocolFurry.Models.GameEvents;
+﻿namespace s2ProtocolFurry.Events.GameEvents;
 
 public class GameEvent
 {
     public GameEvent(int userId, int eventId, string eventType, int bits, int gameloop)
     {
         UserId = userId;
-        EventId = eventId;            
+        EventId = eventId;
         Bits = bits;
         Gameloop = gameloop;
         EventType = eventType switch

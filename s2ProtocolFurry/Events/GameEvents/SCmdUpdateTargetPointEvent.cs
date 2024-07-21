@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class SCmdUpdateTargetPointEvent
+    internal class SCmdUpdateTargetPointEvent : GameEvent
     {
-        public SCmdUpdateTargetPointEvent(GameEvent gameEvent, long x, long y, long z)
+        public SCmdUpdateTargetPointEvent(GameEvent gameEvent, long x, long y, long z) : base(gameEvent)
         {
             GameEvent = gameEvent;
             X = x;

@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class SGameUserLeaveEvent
+    internal class SGameUserLeaveEvent : GameEvent
     {
-        public SGameUserLeaveEvent(GameEvent gameEvent, int leaveReason)
+        public SGameUserLeaveEvent(GameEvent gameEvent, int leaveReason) : base(gameEvent)
         {
             GameEvent = gameEvent;
             LeaveReason = leaveReason;

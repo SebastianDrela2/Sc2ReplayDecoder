@@ -1,6 +1,4 @@
-﻿using s2ProtocolFurry.Models.GameEvents;
-
-namespace s2ProtocolFurry.Parse
+﻿namespace s2ProtocolFurry.Events.GameEvents
 {
     internal class STriggerSoundLengthSyncEvent : GameEvent
     {

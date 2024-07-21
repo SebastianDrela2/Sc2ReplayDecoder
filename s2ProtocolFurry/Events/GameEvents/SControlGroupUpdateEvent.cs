@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class SControlGroupUpdateEvent
+    internal class SControlGroupUpdateEvent : GameEvent
     {
-        public SControlGroupUpdateEvent(GameEvent gameEvent, int controlGroupUpdate)
+        public SControlGroupUpdateEvent(GameEvent gameEvent, int controlGroupUpdate) : base(gameEvent)
         {
             GameEvent = gameEvent;
             ControlGroupUpdate = controlGroupUpdate;

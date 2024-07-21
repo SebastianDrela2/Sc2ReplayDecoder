@@ -1,5 +1,4 @@
-﻿
-namespace s2ProtocolFurry.Models.GameEvents
+﻿namespace s2ProtocolFurry.Events.GameEvents
 {
     public class GameEvents
     {

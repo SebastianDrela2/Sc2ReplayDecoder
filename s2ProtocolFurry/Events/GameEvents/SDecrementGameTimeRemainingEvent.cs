@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class SDecrementGameTimeRemainingEvent
+    internal class SDecrementGameTimeRemainingEvent : GameEvent
     {
-        public SDecrementGameTimeRemainingEvent(GameEvent gameEvent, int decerementSeconds)
+        public SDecrementGameTimeRemainingEvent(GameEvent gameEvent, int decerementSeconds) : base(gameEvent)
         {
             GameEvent = gameEvent;
             DecerementSeconds = decerementSeconds;

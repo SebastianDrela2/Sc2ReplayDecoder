@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class SUserOptionsEvent
+    internal class SUserOptionsEvent : GameEvent
     {
-        public SUserOptionsEvent(GameEvent gameEvent, bool testCheatsEnabled, bool multiplayerCheatsEnabled, bool gameFullyDownloaded, string hotkeyProfile, bool useGalaxyAsserts, bool debugPauseEnabled, bool cameraFollow, bool isMapToMapTransition, int buildNum, int versionFlags, bool developmentCheatsEnabled, bool platformMac, int baseBuildNum, bool syncChecksummingEnabled)
+        public SUserOptionsEvent(GameEvent gameEvent, bool testCheatsEnabled, bool multiplayerCheatsEnabled, bool gameFullyDownloaded, string hotkeyProfile, bool useGalaxyAsserts, bool debugPauseEnabled, bool cameraFollow, bool isMapToMapTransition, int buildNum, int versionFlags, bool developmentCheatsEnabled, bool platformMac, int baseBuildNum, bool syncChecksummingEnabled) : base(gameEvent)
         {
             GameEvent = gameEvent;
             TestCheatsEnabled = testCheatsEnabled;

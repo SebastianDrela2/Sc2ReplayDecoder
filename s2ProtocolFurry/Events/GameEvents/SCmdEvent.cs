@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class SCmdEvent
+    internal class SCmdEvent : GameEvent
     {
-        public SCmdEvent(GameEvent gameEvent, int? unitGroup, int abilLink, int abilCmdIndex, string? abilCmdData, long? targetX, long? targetY, long? targetZ, int cmdFalgs, int sequence, int? otherUnit)
+        public SCmdEvent(GameEvent gameEvent, int? unitGroup, int abilLink, int abilCmdIndex, string? abilCmdData, long? targetX, long? targetY, long? targetZ, int cmdFalgs, int sequence, int? otherUnit) : base(gameEvent)
         {
             GameEvent = gameEvent;
             UnitGroup = unitGroup;

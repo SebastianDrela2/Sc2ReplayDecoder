@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class SBankFileEvent
+    internal class SBankFileEvent : GameEvent
     {
-        public SBankFileEvent(GameEvent gameEvent, string name)
+        public SBankFileEvent(GameEvent gameEvent, string name) : base(gameEvent)
         {
             GameEvent = gameEvent;
             Name = name;

@@ -1,8 +1,8 @@
 ﻿namespace s2ProtocolFurry.Events.GameEvents
 {
-    internal class SSelectionDeltaEvent
+    internal class SSelectionDeltaEvent : GameEvent
     {
-        public SSelectionDeltaEvent(GameEvent gameEvent, SelectionDeltaEventDelta delta, int controlGroupId)
+        public SSelectionDeltaEvent(GameEvent gameEvent, SelectionDeltaEventDelta delta, int controlGroupId) : base(gameEvent)
         {
             GameEvent = gameEvent;
             Delta = delta;

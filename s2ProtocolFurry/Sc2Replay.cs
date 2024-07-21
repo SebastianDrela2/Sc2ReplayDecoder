@@ -1,5 +1,6 @@
 ﻿using s2ProtocolFurry.Events.InitEvents;
 using s2ProtocolFurry.Events.TrackerEvents;
+using s2ProtocolFurry.Models.Details;
 
 namespace s2ProtocolFurry
 {
@@ -15,5 +16,6 @@ namespace s2ProtocolFurry
         }
 
         public InitData? InitData { get; internal set; }
+        public Details Details { get; internal set; }
     }
 }

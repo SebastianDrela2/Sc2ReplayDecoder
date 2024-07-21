@@ -33,6 +33,8 @@ namespace s2ProtocolFurry.Decoder
             var initData = DecodeReplayInitData();
             replay.InitData = Parse.Parse.InitData(initData);
 
+            var replayDetails = DecodeReplayDetails();
+            replay.Details = Parse.Parse.Details(replayDetails);
 
             var trackerEvents = DecodeReplayTrackerEvents();
             replay.TrackerEvents = Parse.Parse.Tracker(trackerEvents);

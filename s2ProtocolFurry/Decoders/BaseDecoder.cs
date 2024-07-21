@@ -2,37 +2,49 @@
 
 public class BaseDecoder
 {
-    protected List<Tuple<string, int>> CastToListOfTuples(object listObject)
+    protected List<Tuple<string, int>> ProcessListOrDictionary(object listObject)
     {
+        var result = new List<Tuple<string, int>>();
+
         if (listObject is List<object> list)
         {
-            var result = new List<Tuple<string, int>>();
-
             foreach (var item in list)
             {
-                var itemType = item.GetType();
-
-                var typeProp = itemType.GetProperty("Type");
-                var intValue1Prop = itemType.GetProperty("Value1");               
-
-                if (typeProp != null && intValue1Prop != null)
-                {
-                    var typeStr = (string)typeProp.GetValue(item);
-                    var intValue1 = (int)intValue1Prop.GetValue(item);
-
-                    result.Add(new Tuple<string, int>(typeStr, intValue1));
-                }
-                else
-                {
-                    throw new InvalidCastException("The list item does not have the expected properties.");
-                }
+                AddToResult(item, result);
             }
-
-            return result;
+        }
+        else if (listObject is Dictionary<int, object> dictionary)
+        {
+            foreach (var item in dictionary.Values)
+            {
+                AddToResult(item, result);
+            }
         }
         else
         {
-            throw new InvalidCastException("The provided object is not a List<object>.");
+            throw new InvalidCastException("The provided object is neither a List<object> nor a Dictionary<int, object>.");
+        }
+
+        return result;
+    }
+
+    private static void AddToResult(object item, List<Tuple<string, int>> result)
+    {
+        var itemType = item.GetType();
+
+        var typeProp = itemType.GetProperty("Type");
+        var intValue1Prop = itemType.GetProperty("Value1") ?? itemType.GetProperty("Value");
+
+        if (typeProp != null && intValue1Prop != null)
+        {
+            var typeStr = (string)typeProp.GetValue(item);
+            var intValue1 = (int)intValue1Prop.GetValue(item);
+
+            result.Add(new Tuple<string, int>(typeStr, intValue1));
+        }
+        else
+        {
+            throw new InvalidCastException("The list or dictionary item does not have the expected properties.");
         }
     }
 

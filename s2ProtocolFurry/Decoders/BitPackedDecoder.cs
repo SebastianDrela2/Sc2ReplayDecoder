@@ -47,7 +47,7 @@ public class BitPackedDecoder : BaseDecoder, IDecoder
             "_choice" => Choice((
                 Convert.ToInt32(parameters[0]), // min bound
                 Convert.ToInt32(parameters[1])), // max bound
-                CastToListOfTuples(parameters[2]) // fields
+                ProcessListOrDictionary(parameters[2]) // fields
             ),
 
             "_fourcc" => FourCC(),

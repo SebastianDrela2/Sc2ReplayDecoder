@@ -21,4 +21,8 @@
     <ProjectReference Include="..\MPQArchive\MPQArchive.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\Messages\" />
+  </ItemGroup>
+
 </Project>

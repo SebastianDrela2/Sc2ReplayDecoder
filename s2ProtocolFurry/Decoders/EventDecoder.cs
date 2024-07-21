@@ -30,7 +30,8 @@ namespace s2ProtocolFurry.Decoder
                     userId = decoder.Instance(replayUserIdTypeId);
                 }
                 
-                var eventId = (TEnum)decoder.Instance(eventIdTypeId);
+                var instance = decoder.Instance(eventIdTypeId);
+                var eventId = (TEnum)instance;
                 if (!eventTypes.TryGetValue(eventId, out var eventType))
                 {
                     throw new CorruptedException($"eventid({eventId}) at {decoder}");

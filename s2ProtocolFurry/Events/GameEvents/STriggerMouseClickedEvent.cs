@@ -1,6 +1,4 @@
-﻿using s2ProtocolFurry.Events.GameEvents;
-
-namespace s2ProtocolFurry.Parse
+﻿namespace s2ProtocolFurry.Events.GameEvents
 {
     public class STriggerMouseClickedEvent : GameEvent
     {

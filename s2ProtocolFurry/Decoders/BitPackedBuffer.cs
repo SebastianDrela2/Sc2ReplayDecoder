@@ -60,7 +60,7 @@
             int result = 0;
             int resultBits = 0;
 
-            while (resultBits < count)
+            while (resultBits != count)
             {
                 if (_nextBits == 0)
                 {

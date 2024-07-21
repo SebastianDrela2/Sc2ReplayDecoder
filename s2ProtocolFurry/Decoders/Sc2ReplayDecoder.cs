@@ -33,12 +33,18 @@ namespace s2ProtocolFurry.Decoder
             var initData = DecodeReplayInitData();
             replay.InitData = Parse.Parse.InitData(initData);
 
-            //var replayDetails = DecodeReplayDetails();
-            //replay.Details = Parse.Parse.Details(replayDetails);
+            var replayDetails = DecodeReplayDetails();
+            replay.Details = Parse.Parse.Details(replayDetails);
 
             var trackerEvents = DecodeReplayTrackerEvents();
             replay.TrackerEvents = Parse.Parse.Tracker(trackerEvents);
 
+            var gameEvents = DecodeReplayGameEvents();
+            replay.GameEvents = Parse.Parse.GameEvents(gameEvents);
+
+            var messages = DecodeReplayMessageEvents();
+            Parse.Parse.SetMessages(messages, replay);
+            
             if (replay.TrackerEvents is not null)
             {
                 replay.TrackerEvents.SUnitBornEvents.ToList().ForEach(f => f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle));

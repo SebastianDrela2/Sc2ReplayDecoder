@@ -6,61 +6,59 @@ namespace s2ProtocolFurry.Parse
 {
     public static partial class Parse
     {
-        public static GameEvents GameEvents(Dictionary<string, object> dic)
+        public static GameEvents GameEvents(IEnumerable<Dictionary<string, object>> dic)
         {
             List<GameEvent> gameevents = new();
 
-            foreach (var entry in dic)
+            foreach (var gameDic in dic)
             {
-                if (entry.Value is Dictionary<string, object> gameDic)
+                GameEvent gameEvent = GetGameEvent(gameDic);
+                GameEvent detailEvent = gameEvent.EventType switch
                 {
-                    GameEvent gameEvent = GetGameEvent(gameDic);
+                    GameEventType.SBankFileEvent => GetSBankFileEvent(gameDic, gameEvent),
+                    GameEventType.SBankKeyEvent => GetSBankKeyEvent(gameDic, gameEvent),
+                    GameEventType.SBankSectionEvent => GetSBankSectionEvent(gameDic, gameEvent),
+                    GameEventType.SBankSignatureEvent => GetSBankSignatureEvent(gameDic, gameEvent),
+                    GameEventType.SBankValueEvent => GetSBankValueEvent(gameDic, gameEvent),
+                    GameEventType.SCameraUpdateEvent => GetSCameraUpdateEvent(gameDic, gameEvent),
+                    GameEventType.SCmdEvent => GetSCmdEvent(gameDic, gameEvent),
+                    GameEventType.SCmdUpdateTargetPointEvent => GetSCmdUpdateTargetPointEvent(gameDic, gameEvent),
+                    GameEventType.SCommandManagerStateEvent => GetSCommandManagerStateEvent(gameDic, gameEvent),
+                    GameEventType.SControlGroupUpdateEvent => GetSControlGroupUpdateEvent(gameDic, gameEvent),
+                    GameEventType.SGameUserLeaveEvent => GetSGameUserLeaveEvent(gameDic, gameEvent),
+                    GameEventType.SSelectionDeltaEvent => GetSSelectionDeltaEvent(gameDic, gameEvent),
+                    GameEventType.SSetSyncLoadingTimeEvent => GetSSetSyncLoadingTimeEvent(gameDic, gameEvent),
+                    GameEventType.SSetSyncPlayingTimeEvent => GetSSetSyncPlayingTimeEvent(gameDic, gameEvent),
+                    GameEventType.STriggerDialogControlEvent => GetSTriggerDialogControlEvent(gameDic, gameEvent),
+                    GameEventType.STriggerPingEvent => GetSTriggerPingEvent(gameDic, gameEvent),
+                    GameEventType.STriggerSoundLengthSyncEvent => new STriggerSoundLengthSyncEvent(gameEvent),
+                    GameEventType.SUserFinishedLoadingSyncEvent => new SUserFinishedLoadingSyncEvent(gameEvent),
+                    GameEventType.SUserOptionsEvent => GetSUserOptionsEvent(gameDic, gameEvent),
+                    GameEventType.SCmdUpdateTargetUnitEvents => GetSCmdUpdateTargetUnitEvent(gameDic, gameEvent),
+                    GameEventType.STriggerKeyPressedEvent => GetSTriggerKeyPressedEvent(gameDic, gameEvent),
+                    GameEventType.SUnitClickEvent => GetSUnitClickEvent(gameDic, gameEvent),
+                    GameEventType.SDecrementGameTimeRemainingEvent => GetSDecrementGameTimeRemainingEvent(gameDic, gameEvent),
+                    GameEventType.STriggerChatMessageEvent => GetSTriggerChatMessageEvent(gameDic, gameEvent),
+                    GameEventType.STriggerMouseClickedEvent => GetSTriggerMouseClickedEvent(gameDic, gameEvent),
+                    //GameEventType.STriggerSoundtrackDoneEvent => GetSTriggerSoundtrackDoneEvent(gameDic, gameEvent),
+                    //GameEventType.SCameraSaveEvent => GetSCameraSaveEvent(gameDic, gameEvent),
+                    //GameEventType.STriggerCutsceneBookmarkFiredEvent => GetSTriggerCutsceneBookmarkFiredEvent(gameDic, gameEvent),
+                    //GameEventType.STriggerCutsceneEndSceneFiredEvent => GetSTriggerCutsceneEndSceneFiredEvent(gameDic, gameEvent),
+                    //GameEventType.STriggerSoundLengthQueryEvent => GetSTriggerSoundLengthQueryEvent(gameDic, gameEvent),
+                    //GameEventType.STriggerSoundOffsetEvent => GetSTriggerSoundOffsetEvent(gameDic, gameEvent),
+                    //GameEventType.STriggerTargetModeUpdateEvent => GetSTriggerTargetModeUpdateEvent(gameDic, gameEvent),
+                    //GameEventType.STriggerTransmissionCompleteEvent => GetSTriggerTransmissionCompleteEvent(gameDic, gameEvent),
+                    //GameEventType.SAchievementAwardedEvent => GetSAchievementAwardedEvent(gameDic, gameEvent),
+                    //GameEventType.STriggerTransmissionOffsetEvent => GetSTriggerTransmissionOffsetEvent(gameDic, gameEvent),
+                    //GameEventType.STriggerButtonPressedEvent => GetSTriggerButtonPressedEvent(gameDic, gameEvent),
+                    //GameEventType.STriggerGameMenuItemSelectedEvent => GetSTriggerGameMenuItemSelectedEvent(gameDic, gameEvent),
+                    //GameEventType.STriggerMouseMovedEvent => GetSTriggerMouseMovedEvent(gameDic, gameEvent),
+                    _ => GetUnknownEvent(gameDic, gameEvent)
+                };
 
-                    GameEvent detailEvent = gameEvent.EventType switch
-                    {
-                        GameEventType.SBankFileEvent => GetSBankFileEvent(gameDic, gameEvent),
-                        GameEventType.SBankKeyEvent => GetSBankKeyEvent(gameDic, gameEvent),
-                        GameEventType.SBankSectionEvent => GetSBankSectionEvent(gameDic, gameEvent),
-                        GameEventType.SBankSignatureEvent => GetSBankSignatureEvent(gameDic, gameEvent),
-                        GameEventType.SBankValueEvent => GetSBankValueEvent(gameDic, gameEvent),
-                        GameEventType.SCameraUpdateEvent => GetSCameraUpdateEvent(gameDic, gameEvent),
-                        GameEventType.SCmdEvent => GetSCmdEvent(gameDic, gameEvent),
-                        GameEventType.SCmdUpdateTargetPointEvent => GetSCmdUpdateTargetPointEvent(gameDic, gameEvent),
-                        GameEventType.SCommandManagerStateEvent => GetSCommandManagerStateEvent(gameDic, gameEvent),
-                        GameEventType.SControlGroupUpdateEvent => GetSControlGroupUpdateEvent(gameDic, gameEvent),
-                        GameEventType.SGameUserLeaveEvent => GetSGameUserLeaveEvent(gameDic, gameEvent),
-                        GameEventType.SSelectionDeltaEvent => GetSSelectionDeltaEvent(gameDic, gameEvent),
-                        GameEventType.SSetSyncLoadingTimeEvent => GetSSetSyncLoadingTimeEvent(gameDic, gameEvent),
-                        GameEventType.SSetSyncPlayingTimeEvent => GetSSetSyncPlayingTimeEvent(gameDic, gameEvent),
-                        GameEventType.STriggerDialogControlEvent => GetSTriggerDialogControlEvent(gameDic, gameEvent),
-                        GameEventType.STriggerPingEvent => GetSTriggerPingEvent(gameDic, gameEvent),
-                        GameEventType.STriggerSoundLengthSyncEvent => new STriggerSoundLengthSyncEvent(gameEvent),
-                        GameEventType.SUserFinishedLoadingSyncEvent => new SUserFinishedLoadingSyncEvent(gameEvent),
-                        GameEventType.SUserOptionsEvent => GetSUserOptionsEvent(gameDic, gameEvent),
-                        GameEventType.SCmdUpdateTargetUnitEvents => GetSCmdUpdateTargetUnitEvent(gameDic, gameEvent),
-                        GameEventType.STriggerKeyPressedEvent => GetSTriggerKeyPressedEvent(gameDic, gameEvent),
-                        GameEventType.SUnitClickEvent => GetSUnitClickEvent(gameDic, gameEvent),
-                        GameEventType.SDecrementGameTimeRemainingEvent => GetSDecrementGameTimeRemainingEvent(gameDic, gameEvent),
-                        GameEventType.STriggerChatMessageEvent => GetSTriggerChatMessageEvent(gameDic, gameEvent),
-                        GameEventType.STriggerMouseClickedEvent => GetSTriggerMouseClickedEvent(gameDic, gameEvent),
-                        //GameEventType.STriggerSoundtrackDoneEvent => GetSTriggerSoundtrackDoneEvent(gameDic, gameEvent),
-                        //GameEventType.SCameraSaveEvent => GetSCameraSaveEvent(gameDic, gameEvent),
-                        //GameEventType.STriggerCutsceneBookmarkFiredEvent => GetSTriggerCutsceneBookmarkFiredEvent(gameDic, gameEvent),
-                        //GameEventType.STriggerCutsceneEndSceneFiredEvent => GetSTriggerCutsceneEndSceneFiredEvent(gameDic, gameEvent),
-                        //GameEventType.STriggerSoundLengthQueryEvent => GetSTriggerSoundLengthQueryEvent(gameDic, gameEvent),
-                        //GameEventType.STriggerSoundOffsetEvent => GetSTriggerSoundOffsetEvent(gameDic, gameEvent),
-                        //GameEventType.STriggerTargetModeUpdateEvent => GetSTriggerTargetModeUpdateEvent(gameDic, gameEvent),
-                        //GameEventType.STriggerTransmissionCompleteEvent => GetSTriggerTransmissionCompleteEvent(gameDic, gameEvent),
-                        //GameEventType.SAchievementAwardedEvent => GetSAchievementAwardedEvent(gameDic, gameEvent),
-                        //GameEventType.STriggerTransmissionOffsetEvent => GetSTriggerTransmissionOffsetEvent(gameDic, gameEvent),
-                        //GameEventType.STriggerButtonPressedEvent => GetSTriggerButtonPressedEvent(gameDic, gameEvent),
-                        //GameEventType.STriggerGameMenuItemSelectedEvent => GetSTriggerGameMenuItemSelectedEvent(gameDic, gameEvent),
-                        //GameEventType.STriggerMouseMovedEvent => GetSTriggerMouseMovedEvent(gameDic, gameEvent),
-                        _ => GetUnknownEvent(gameDic, gameEvent)
-                    };
-                    gameevents.Add(detailEvent);
-                }
+                gameevents.Add(detailEvent);
             }
+
             return new GameEvents(gameevents);
         }
 

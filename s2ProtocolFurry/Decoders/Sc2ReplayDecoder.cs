@@ -14,7 +14,7 @@ namespace s2ProtocolFurry.Decoder
 
         private List<ProtocolTypeInfo> _typeInfos;
 
-        public Sc2ReplayDecoder(string path)
+        public Sc2ReplayDecoder(string path, string protocolVersionsDir)
         {
             _path = path;
             using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -23,7 +23,7 @@ namespace s2ProtocolFurry.Decoder
 
             _mpqArchive = mpqReader.Read();
             _eventDecoder = new EventDecoder();
-            _protocolImporter = new ProtocolImporter(@"C:\Users\Seba\source\repos\ParasiteReplayAnalyzer\s2protocol.NET\libs2\s2protocol\versions");
+            _protocolImporter = new ProtocolImporter(protocolVersionsDir);
 
             _typeInfos = _protocolImporter.GetTypeInfos();
         }

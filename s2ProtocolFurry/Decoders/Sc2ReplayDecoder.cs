@@ -61,7 +61,7 @@ namespace s2ProtocolFurry.Decoder
 
         public Dictionary<string, object> DecodeReplayDetails()
         {
-            var decoder = new VersionedDecoder(GetListItemContent("replay.details.backup"), _typeInfos);
+            var decoder = new VersionedDecoder(GetListItemContent("replay.details"), _typeInfos);
             return (Dictionary<string, object>)decoder.Instance(EventMappedTypes.GameDetailsTypeId);
         }
 

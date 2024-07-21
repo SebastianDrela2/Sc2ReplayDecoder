@@ -6,16 +6,13 @@ using s2ProtocolFurry.Protocol;
 namespace s2ProtocolFurry.Decoder
 {
     public class Sc2ReplayDecoder
-    {
-        private readonly string[] _versions;
+    {        
         private readonly EventDecoder _eventDecoder;
         private readonly MPQArchive.MPQ.ReceivedData.MPQArchive _mpqArchive;
         private List<KeyValuePair<string, object>> _typeInfos;
 
         public Sc2ReplayDecoder(string path)
-        {
-            _versions = ProtocolImporter.ListAllProtocols();
-            
+        {                        
             using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 
             var mpqReader = new MPQReader(stream);

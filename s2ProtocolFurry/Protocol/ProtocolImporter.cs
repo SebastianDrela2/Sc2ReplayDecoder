@@ -23,29 +23,5 @@ namespace s2ProtocolFurry.Protocol
 
             return files;
         }
-
-        public static ProtocolInstance ImportLatestProtocol(string basePath = null)
-        {
-            if (basePath == null)
-            {
-                basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            }
-
-            var files = ListAllProtocols(basePath);
-
-            if (files.Length == 0)
-            {
-                throw new InvalidOperationException("No protocol files found.");
-            }
-
-            var latestVersion = files.Last();
-
-            var protocol = Path.GetFileNameWithoutExtension(latestVersion);
-        }
-
-        private static ProtocolInstance ImportProtocol(string basePath, string protocolName)
-        {
-
-        }
     }
 }

@@ -2,6 +2,40 @@
 
 public class BaseDecoder
 {
+    protected List<Tuple<string, int>> CastToListOfTuples(object listObject)
+    {
+        if (listObject is List<object> list)
+        {
+            var result = new List<Tuple<string, int>>();
+
+            foreach (var item in list)
+            {
+                var itemType = item.GetType();
+
+                var typeProp = itemType.GetProperty("Type");
+                var intValue1Prop = itemType.GetProperty("Value1");               
+
+                if (typeProp != null && intValue1Prop != null)
+                {
+                    var typeStr = (string)typeProp.GetValue(item);
+                    var intValue1 = (int)intValue1Prop.GetValue(item);
+
+                    result.Add(new Tuple<string, int>(typeStr, intValue1));
+                }
+                else
+                {
+                    throw new InvalidCastException("The list item does not have the expected properties.");
+                }
+            }
+
+            return result;
+        }
+        else
+        {
+            throw new InvalidCastException("The provided object is not a List<object>.");
+        }
+    }
+
     protected Dictionary<int, Tuple<string, int>> CastToDictionaryIntTupleStringInt(object dictObject)
     {
         if (dictObject is Dictionary<int, object> dict)

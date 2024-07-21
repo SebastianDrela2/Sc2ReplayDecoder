@@ -273,7 +273,7 @@ namespace s2ProtocolFurry.Parse
         {
             List<UserInitialData> initDatas = new List<UserInitialData>();
 
-            if (dic.TryGetValue("m_userInitialData", out var userInitialDataObj) && userInitialDataObj is List<object> userInitialDataList)
+            if (dic.TryGetValue("m_userInitialData", out var userInitialDataObj) && userInitialDataObj is object[] userInitialDataList)
             {
                 foreach (var userInitialData in userInitialDataList)
                 {

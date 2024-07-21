@@ -1,11 +1,10 @@
 ﻿using s2ProtocolFurry.Decoder;
 using s2ProtocolFurry.Protocol;
 using System.Collections;
-using System.Reflection;
 
 namespace s2ProtocolFurry.Decoders;
 
-public class BitPackedDecoder : IDecoder
+public class BitPackedDecoder : BaseDecoder, IDecoder
 {
     private readonly BitPackedBuffer _buffer;
     private readonly List<ProtocolTypeInfo> _typeInfos;
@@ -32,13 +31,40 @@ public class BitPackedDecoder : IDecoder
         var methodName = typeInfo.Type;
         var parameters = typeInfo.Arguments;
 
-        var method = GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-        if (method == null)
+        var result = methodName switch
         {
-            throw new InvalidOperationException($"Method {methodName} not found");
-        }
+            "_array" => Array(
+                (Convert.ToInt32(parameters[0]), Convert.ToInt32(parameters[1])), // Tuple for bounds
+                Convert.ToInt32(parameters[2]) // typeId
+            ),
+            "_bitarray" => BitArray(
+                (Convert.ToInt32(parameters[0]), Convert.ToInt32(parameters[1])) // Tuple for bounds
+            ),
+            "_blob" => Blob(
+                (Convert.ToInt32(parameters[0]), Convert.ToInt32(parameters[1])) // Tuple for bounds
+            ),
+            "_bool" => Bool(),
+            "_choice" => Choice((
+                Convert.ToInt32(parameters[0]), // min bound
+                Convert.ToInt32(parameters[1])), // max bound
+                CastToListOfTuples(parameters[2]) // fields
+            ),
 
-        return method.Invoke(this, parameters);
+            "_fourcc" => FourCC(),
+            "_int" => Int(
+                (Convert.ToInt32(parameters[0]), Convert.ToInt32(parameters[1])) // Tuple for bounds
+            ),
+            "_null" => Null(),
+            "_optional" => Optional(Convert.ToInt32(parameters[0])),
+            "_real32" => Real32(),
+            "_real64" => Real64(),
+            "_struct" => Struct(
+                ConvertToListOfTuples(parameters) // fields
+            ),
+            _ => throw new InvalidOperationException($"Unknown method '{methodName}'")
+        };
+
+        return result;
     }
 
     public void ByteAlign()
@@ -54,6 +80,21 @@ public class BitPackedDecoder : IDecoder
     public int UsedBits()
     {
         return _buffer.UsedBits();
+    }
+
+    private int VInt()
+    {
+        int b = _buffer.ReadBits(8);
+        bool negative = (b & 1) != 0;
+        int result = (b >> 1) & 0x3f;
+        int bits = 6;
+        while ((b & 0x80) != 0)
+        {
+            b = _buffer.ReadBits(8);
+            result |= (b & 0x7f) << bits;
+            bits += 7;
+        }
+        return negative ? -result : result;
     }
 
     private object[] Array((int min, int max) bounds, int typeId)
@@ -141,42 +182,41 @@ public class BitPackedDecoder : IDecoder
     private Dictionary<string, object> Struct(List<Tuple<string, int, int>> fields)
     {
         var result = new Dictionary<string, object>();
-        int length = Int((0, 0)); // This should be the correct way to get the length
-        for (int i = 0; i < length; i++)
+
+        foreach (var field in fields)
         {
-            int tag = Int((0, 0)); // This should be the correct way to get the tag
-            var field = fields.FirstOrDefault(f => f.Item3 == tag);
-            if (field != null)
+            string fieldName = field.Item1;
+            int fieldId = field.Item2;
+
+            if (fieldName == "__parent")
             {
-                if (field.Item1 == "__parent")
+                var parent = Instance(fieldId);
+                if (parent is Dictionary<string, object> parentDict)
                 {
-                    var parent = Instance(field.Item2);
-                    if (parent is Dictionary<string, object> parentDict)
+                    // Merge parent dictionary into result
+                    foreach (var kvp in parentDict)
                     {
-                        foreach (var kvp in parentDict)
-                        {
-                            result[kvp.Key] = kvp.Value;
-                        }
+                        result[kvp.Key] = kvp.Value;
                     }
-                    else if (fields.Count == 1)
-                    {
-                        result = (Dictionary<string, object>)parent;
-                    }
-                    else
-                    {
-                        result[field.Item1] = parent;
-                    }
+                }
+                else if (fields.Count == 1)
+                {
+                    // Replace result with parent if there's only one field
+                    result = (Dictionary<string, object>)parent;
                 }
                 else
                 {
-                    result[field.Item1] = Instance(field.Item2);
+                    // Add parent to result with fieldName as the key
+                    result[fieldName] = parent;
                 }
             }
             else
             {
-                SkipInstance();
+                // Add instance to result using fieldName as the key
+                result[fieldName] = Instance(fieldId);
             }
         }
+
         return result;
     }
 

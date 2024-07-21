@@ -26,8 +26,7 @@ namespace s2ProtocolFurry.Decoder
             var typeInfo = _typeInfos[typeId];
             var methodName = typeInfo.Type;
             var parameters = typeInfo.Arguments;
-
-            var toString = typeInfo.ToString();          
+            
             var result = methodName switch
             {
                 "_array" => Array((int)parameters[0], (int)parameters[1]),

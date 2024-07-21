@@ -71,5 +71,10 @@ namespace s2ProtocolFurry.Decoder
             var decoder = new BitPackedDecoder(_mpqArchive.MPQUserData.Content, _typeInfos);
             return (Dictionary<string, object>)decoder.Instance(EventMappedTypes.ReplayInitDataTypeId);
         }
+
+        private byte[] GetListItemContent(string listItemFile)
+        {
+            return _mpqArchive.ListingFiles.First(x => x.Key == listItemFile).Value;
+        }
     }
 }

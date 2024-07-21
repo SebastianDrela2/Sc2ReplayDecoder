@@ -1,5 +1,4 @@
 ﻿using s2ProtocolFurry.Decoders;
-using s2ProtocolFurry.NNetGame;
 
 namespace s2ProtocolFurry.Decoder
 {

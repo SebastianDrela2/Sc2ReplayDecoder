@@ -3,17 +3,17 @@
     public class BitPackedBuffer
     {
         private readonly byte[] _data;
-        private int _used;      // Index of the next byte to be read
-        private int _nextBits; // Number of bits remaining in the current byte
-        private byte _next;    // Current byte being read
+        private int _used;
+        private int _next;
+        private int _nextBits;
         private readonly bool _bigEndian;
 
         public BitPackedBuffer(byte[] data, string endian = "big")
         {
             _data = data ?? Array.Empty<byte>();
             _used = 0;
-            _nextBits = 0;
             _next = 0;
+            _nextBits = 0;
             _bigEndian = endian == "big";
         }
 
@@ -38,16 +38,17 @@
             _nextBits = 0;
         }
 
-        public byte[] ReadAlignedBytes(int count)
+        public byte[] ReadAlignedBytes(int bytes)
         {
             ByteAlign();
-            if (_used + count > _data.Length)
+            var data = _data.Skip(_used).Take(bytes).ToArray();
+            _used += bytes;
+
+            if (data.Length != bytes)
             {
                 throw new TruncatedError();
             }
-            var result = _data.Skip(_used).Take(count).ToArray();
-            _used += count;
-            return result;
+            return data;
         }
 
         public int ReadBits(int bits)
@@ -69,10 +70,10 @@
                     _nextBits = 8;
                 }
                 int copybits = Math.Min(bits - resultbits, _nextBits);
-                int copy = (_next & ((1 << copybits) - 1));
+                int copy = _next & ((1 << copybits) - 1);
                 if (_bigEndian)
-                {
-                    result |= copy << (bits - resultbits - copybits);
+                {                   
+                    result |= copy << (bits - resultbits - copybits);                  
                 }
                 else
                 {

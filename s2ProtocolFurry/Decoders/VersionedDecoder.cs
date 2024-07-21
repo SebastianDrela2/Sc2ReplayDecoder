@@ -55,10 +55,12 @@ namespace s2ProtocolFurry.Decoder
 
         private void ExpectSkip(int expected)
         {
-            var bits = _buffer.ReadBits(8);
+            var bits = _buffer.ReadBits(8);           
 
             if (bits != expected)
             {
+                Console.WriteLine($"Expecting: {expected}, Found: {bits}, Position: {_buffer.UsedBits()}");
+
                 throw new InvalidOperationException("Corrupted data");
             }
         }
@@ -257,7 +259,7 @@ namespace s2ProtocolFurry.Decoder
                     break;
                 case 9: // vint
                     VInt();
-                    break;
+                    break;              
                 default:
                     throw new InvalidOperationException("Unknown skip type.");
             }

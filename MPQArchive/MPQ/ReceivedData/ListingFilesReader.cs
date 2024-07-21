@@ -1,16 +1,19 @@
 ﻿using MPQArchive.MPQ.DecryptedData;
+using System.Text;
 
 namespace MPQArchive.MPQ.ReceivedData
 {
     public class ListingFilesReader(MPQFileReader mpqFileReader)
     {
-        public Dictionary<string, string[]> Read()
+        public Dictionary<string, byte[]> Read()
         {
             var listingFiles = mpqFileReader.ReadFile("(listfile)");
+            var fileContent = Encoding.UTF8.GetString(listingFiles);
+            var lines = fileContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+          
+            var listingFilesDict = new Dictionary<string, byte[]>();
 
-            var listingFilesDict = new Dictionary<string, string[]>();
-
-            foreach (var listingFile in listingFiles)
+            foreach (var listingFile in lines)
             {
                 if (!string.IsNullOrEmpty(listingFile))
                 {

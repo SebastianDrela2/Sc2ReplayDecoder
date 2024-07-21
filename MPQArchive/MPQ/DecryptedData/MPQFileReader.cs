@@ -2,7 +2,6 @@
 using MPQArchive.MPQ.Utils;
 using ICSharpCode.SharpZipLib.BZip2;
 using System.IO.Compression;
-using System.Text;
 
 namespace MPQArchive.MPQ.DecryptedData
 {
@@ -13,7 +12,7 @@ namespace MPQArchive.MPQ.DecryptedData
         CompositeTable compositeTable,
         long headerBaseOffset)
     {
-        public string[] ReadFile(string fileName, bool forceDecompress = false)
+        public byte[] ReadFile(string fileName, bool forceDecompress = false)
         {
             var mpqHashEntry = mpqHashTableReader.GetHashTableEntry(fileName);
 
@@ -62,11 +61,8 @@ namespace MPQArchive.MPQ.DecryptedData
             {
                 fileData = Decompress(fileData);
             }
-
-            var fileContent = Encoding.UTF8.GetString(fileData);
-            var lines = fileContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-
-            return lines;
+            
+            return fileData;
         }
 
         public static byte[] ProcessSectors(byte[] fileData, MPQBlockTableEntry blockEntry, uint[] positions, bool crc, bool forceDecompress)

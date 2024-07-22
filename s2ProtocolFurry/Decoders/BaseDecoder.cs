@@ -81,37 +81,4 @@ public class BaseDecoder
             throw new InvalidCastException("The provided object is not a Dictionary<int, object>.");
         }
     }
-
-    protected List<Tuple<string, int, int>> ConvertToListOfTuples(object[] fields)
-    {
-        var list = new List<Tuple<string, int, int>>();
-        fields = (object[])fields[0];
-
-        if (fields.Length % 3 != 0)
-        {
-            throw new ArgumentException("The fields array length must be a multiple of 3.");
-        }
-
-        for (int i = 0; i < fields.Length; i += 3)
-        {            
-            if (i + 2 >= fields.Length)
-            {
-                throw new ArgumentException("The fields array does not have enough elements to form complete tuples.");
-            }        
-            
-            var fieldName = fields[i] as string;
-            var firstValue = Convert.ToInt32(fields[i + 1]);
-            var secondValue = Convert.ToInt32(fields[i + 2]);
-
-
-            if (fieldName == null)
-            {
-                throw new ArgumentException($"Expected string at index {i}, but got {fields[i]?.GetType().Name}.");
-            }
-
-            list.Add(new Tuple<string, int, int>(fieldName, firstValue, secondValue));
-        }
-
-        return list;
-    }
 }

@@ -16,8 +16,13 @@ namespace s2ProtocolFurry.Protocol
 
             foreach(var protocol in _protocols)
             {
-                var typeInfoContent = ExtractProtocolTypeinfos(protocol);
-                _typeInfosDictionary.Add(protocol, protocolTypeInfoParser.ParseProtocolTypes(typeInfoContent));
+                var parsed = ProtocolTypeInfoParser2.Parse(File.ReadAllText(protocol));
+                //var typeInfoContent = ExtractProtocolTypeinfos(protocol);
+                //var parsed = protocolTypeInfoParser.ParseProtocolTypes(typeInfoContent);
+                _typeInfosDictionary.Add(
+                    protocol,
+                    parsed
+                );
             }
         }
 
@@ -52,7 +57,7 @@ namespace s2ProtocolFurry.Protocol
             return files;
         }
         
-        private string ExtractProtocolTypeinfos(string filePath)
+        private List<string> ExtractProtocolTypeinfos(string filePath)
         {           
             var resultLines = new List<string>();
             var capturing = false;
@@ -79,7 +84,7 @@ namespace s2ProtocolFurry.Protocol
                 }
             }
 
-            return string.Join(Environment.NewLine, resultLines);
+            return resultLines;
         }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using MPQArchive.MPQ.Hashing;
 using MPQArchive.MPQ.Utils;
+using System.Buffers.Binary;
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace MPQArchive.MPQ.DecryptedData
@@ -29,11 +31,11 @@ namespace MPQArchive.MPQ.DecryptedData
             {
                 items[i] = new MPQHashTableEntry
                 {
-                    HashA = src[i * 4 + 0],    
-                    HashB = src[i * 4 + 1],
-                    lcLocale = (ushort)(src[i * 4 + 2] & 0xFFFF),
-                    Platform = (ushort)(src[i * 4 + 2] >> 16),
-                    BlockIndex = src[i * 4 + 3]
+                    HashA = (src[i * 4 + 0]),
+                    HashB = (src[i * 4 + 1]),
+                    lcLocale = ((ushort)(src[i * 4 + 2] & 0xFFFF)),
+                    Platform = ((ushort)(src[i * 4 + 2] >> 16)),
+                    BlockIndex = (src[i * 4 + 3])
                 };
             }
 
@@ -52,10 +54,10 @@ namespace MPQArchive.MPQ.DecryptedData
             {
                 items[i] = new MPQBlockTableEntry()
                 {
-                    FilePosition = src[i * 4 + 0],
-                    CompressedSize = src[i * 4 + 1],
-                    UncompressedSize = src[i * 4 + 2],
-                    Flags = src[i * 4 + 3]
+                    FilePosition = (src[i * 4 + 0]),
+                    CompressedSize = (src[i * 4 + 1]),
+                    UncompressedSize = (src[i * 4 + 2]),
+                    Flags = (src[i * 4 + 3])
                 };
             }
 

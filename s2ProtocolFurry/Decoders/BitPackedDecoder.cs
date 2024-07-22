@@ -11,7 +11,7 @@ public class BitPackedDecoder : BaseDecoder, IDecoder
 
     public BitPackedDecoder(byte[] contents, List<ProtocolTypeInfo> typeInfos)
     {
-        _buffer = new BitPackedBuffer(contents);
+        _buffer = new BitPackedBuffer(contents) { DebugOutput = new() };
         _typeInfos = typeInfos;
     }
 
@@ -59,7 +59,7 @@ public class BitPackedDecoder : BaseDecoder, IDecoder
             "_real32" => Real32(),
             "_real64" => Real64(),
             "_struct" => Struct(
-                ConvertToListOfTuples(parameters) // fields
+                (List<(string Arg1, Int128 Arg2, Int128 Arg3)>)parameters[0] // fields
             ),
             _ => throw new InvalidOperationException($"Unknown method '{methodName}'")
         };
@@ -179,14 +179,14 @@ public class BitPackedDecoder : BaseDecoder, IDecoder
         return BitConverter.ToDouble(bytes, 0);
     }
 
-    private Dictionary<string, object> Struct(List<Tuple<string, int, int>> fields)
+    private Dictionary<string, object> Struct(List<(string Item1, Int128 Item2, Int128 Item3)> fields)
     {
         var result = new Dictionary<string, object>();
 
         foreach (var field in fields)
         {
             string fieldName = field.Item1;
-            int fieldId = field.Item2;
+            int fieldId = checked((int)field.Item2);
 
             if (fieldName == "__parent")
             {

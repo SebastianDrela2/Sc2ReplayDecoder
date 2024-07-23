@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using s2ProtocolFurry.Logging;
+using System.Text;
 
 namespace s2ProtocolFurry.Decoder
 {

@@ -12,13 +12,11 @@ namespace s2ProtocolFurry.Protocol
         {
             _protocols = GetAllProtocolFiles(basePath);
 
-            var protocolTypeInfoParser = new ProtocolTypeInfoParser();
+            var protocolTypeInfoParser = new ProtocolTypeInfoRegexParser();
 
             foreach(var protocol in _protocols)
             {
-                var parsed = ProtocolTypeInfoParser2.Parse(File.ReadAllText(protocol));
-                //var typeInfoContent = ExtractProtocolTypeinfos(protocol);
-                //var parsed = protocolTypeInfoParser.ParseProtocolTypes(typeInfoContent);
+                var parsed = ProtocolTypeInfoParser.Parse(File.ReadAllText(protocol));               
                 _typeInfosDictionary.Add(
                     protocol,
                     parsed

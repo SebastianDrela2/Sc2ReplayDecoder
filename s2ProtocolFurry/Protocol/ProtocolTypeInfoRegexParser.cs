@@ -7,22 +7,22 @@ public class ProtocolTypeInfoRegexParser
 {
     public static readonly Regex s_Regex = new (@"\('(?<type>_int|_choice|_struct|_blob|_array|_optional|_bool|_fourcc|_bitarray|_null)',\[(?<args>.*?)\]\)(,?\s*#\d+)?", RegexOptions.Compiled);
 
-    public List<ProtocolTypeInfo> ParseProtocolTypes(List<string> lines)
-    {
-        var protocolTypes = new List<ProtocolTypeInfo>();
+    //public List<ProtocolTypeInfo> ParseProtocolTypes(List<string> lines)
+    //{
+    //    var protocolTypes = new List<ProtocolTypeInfo>();
 
-        foreach (var line in lines)
-        {
-            if (s_Regex.Matches(line) is not [{ Success: true } match]) throw new InvalidOperationException();
+    //    foreach (var line in lines)
+    //    {
+    //        if (s_Regex.Matches(line) is not [{ Success: true } match]) throw new InvalidOperationException();
 
-            var type = match.Groups["type"].Value;
-            var args = match.Groups["args"].Value;
-            var arguments = ParseArguments(args);
-            protocolTypes.Add(new ProtocolTypeInfo(type, arguments));
-        }
+    //        var type = match.Groups["type"].Value;
+    //        var args = match.Groups["args"].Value;
+    //        var arguments = ParseArguments(args);
+    //        protocolTypes.Add(new ProtocolTypeInfo(type, arguments));
+    //    }
 
-        return protocolTypes;
-    }
+    //    return protocolTypes;
+    //}
 
     private object[] ParseArguments(string args)
     {

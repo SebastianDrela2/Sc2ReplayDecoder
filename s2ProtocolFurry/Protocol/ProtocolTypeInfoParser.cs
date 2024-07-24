@@ -212,7 +212,7 @@
 
             ExactChar(ref input, ']');
 
-            return ProtocolTypeInfo.MakeArray(arg1, arg2, arg2);
+            return ProtocolTypeInfo.MakeArray(arg1, arg2, arg3);
         }
         public static ProtocolTypeInfo Parse_optional(ref ReadOnlySpan<char> input)
         {

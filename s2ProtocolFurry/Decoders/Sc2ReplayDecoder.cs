@@ -36,23 +36,23 @@ namespace s2ProtocolFurry.Decoder
             var version = replayHeader["m_version"] as Dictionary<string, object>;
             var baseBuild = version["m_baseBuild"];
 
-            _typeInfos = _protocolImporter.GetTypeInfos((int)baseBuild);
+            _typeInfos = _protocolImporter.GetTypeInfos(90870);
 
-            //var initData = DecodeReplayInitData();
-            //replay.InitData = Parse.Parse.InitData(initData);
+            var initData = DecodeReplayInitData();
+            replay.InitData = Parse.Parse.InitData(initData);
 
-            //var trackerEvents = DecodeReplayTrackerEvents();
-            //replay.TrackerEvents = Parse.Parse.Tracker(trackerEvents);
+            var trackerEvents = DecodeReplayTrackerEvents();
+            replay.TrackerEvents = Parse.Parse.Tracker(trackerEvents);
 
             var replayDetails = DecodeReplayDetails();
             replay.Details = Parse.Parse.Details(replayDetails);
-            
-            //var gameEvents = DecodeReplayGameEvents();
-            //replay.GameEvents = Parse.Parse.GameEvents(gameEvents);
 
-            //var messages = DecodeReplayMessageEvents();
-            //Parse.Parse.SetMessages(messages, replay);
-            
+            var gameEvents = DecodeReplayGameEvents();
+            replay.GameEvents = Parse.Parse.GameEvents(gameEvents);
+
+            var messages = DecodeReplayMessageEvents();
+            Parse.Parse.SetMessages(messages, replay);
+
             if (replay.TrackerEvents is not null)
             {
                 replay.TrackerEvents.SUnitBornEvents.ToList().ForEach(f => f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle));

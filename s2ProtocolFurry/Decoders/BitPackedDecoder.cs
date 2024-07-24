@@ -26,42 +26,21 @@ public class BitPackedDecoder : BaseDecoder, IDecoder
         {
             throw new InvalidOperationException("Corrupted data");
         }
-
+        
         var typeInfo = _typeInfos[typeId];
-        var methodName = typeInfo.Type;
-        var parameters = typeInfo.Arguments;
-
-        var result = methodName switch
+        var result = typeInfo switch
         {
-            "_array" => Array(
-                (Convert.ToInt32(parameters[0]), Convert.ToInt32(parameters[1])), // Tuple for bounds
-                Convert.ToInt32(parameters[2]) // typeId
-            ),
-            "_bitarray" => BitArray(
-                (Convert.ToInt32(parameters[0]), Convert.ToInt32(parameters[1])) // Tuple for bounds
-            ),
-            "_blob" => Blob(
-                (Convert.ToInt32(parameters[0]), Convert.ToInt32(parameters[1])) // Tuple for bounds
-            ),
-            "_bool" => Bool(),
-            "_choice" => Choice((
-                Convert.ToInt32(parameters[0]), // min bound
-                Convert.ToInt32(parameters[1])), // max bound
-                ProcessListOrDictionary(parameters[2]) // fields
-            ),
-
-            "_fourcc" => FourCC(),
-            "_int" => Int(
-                (Convert.ToInt32(parameters[0]), Convert.ToInt32(parameters[1])) // Tuple for bounds
-            ),
-            "_null" => Null(),
-            "_optional" => Optional(Convert.ToInt32(parameters[0])),
-            "_real32" => Real32(),
-            "_real64" => Real64(),
-            "_struct" => Struct(
-                (List<(string Arg1, Int128 Arg2, Int128 Arg3)>)parameters[0] // fields
-            ),
-            _ => throw new InvalidOperationException($"Unknown method '{methodName}'")
+            ProtocolTypeArray(Int128 arg1, Int128 arg2, Int128 typeid) => Array(((int)arg1, (int)arg2), (int)typeid),
+            ProtocolTypeBitArray(Int128 arg1, Int128 arg2) => BitArray(((int)arg1, (int)arg2)),
+            ProtocolTypeBlob(Int128 arg1, Int128 arg2) => Blob(((int)arg1, (int)arg2)),
+            ProtocolTypeBool => Bool(),
+            ProtocolTypeChoice(Int128 arg1, Int128 arg2, List<(string Arg1, Int128 Arg2)> arg3) => Choice(((int)arg1, (int)arg2), ProcessListOrDictionary(arg3)),
+            ProtocolTypeFourcc => FourCC(),
+            ProtocolTypeInt(Int128 arg1, Int128 arg2) => Int(((int)arg1, (int)arg2)),
+            ProtocolTypeNull => Null(),
+            ProtocolTypeOptional(Int128 arg1) => Optional((int)arg1),
+            ProtocolTypeStruct(List<(string Arg1, Int128 Arg2, Int128 Arg3)> arg1) => Struct(arg1),
+            var x => throw new InvalidOperationException($"Unknown method '{x.Type}'")
         };
 
         return result;

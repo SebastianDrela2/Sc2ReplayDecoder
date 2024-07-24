@@ -37,24 +37,19 @@ namespace s2ProtocolFurry.Decoder
             }
 
             var typeInfo = _typeInfos[typeId];
-            var methodName = typeInfo.Type;
-            var parameters = typeInfo.Arguments;
-
-            var result = methodName switch
+            var result = typeInfo switch
             {
-                "_array" => Array((int)(Int128)parameters[0], (int)(Int128)parameters[1]),
-                "_bitarray" => BitArray((int)(Int128)parameters[0]),
-                "_blob" => Blob((int)(Int128)parameters[0]),
-                "_bool" => Bool(),
-                "_choice" => Choice((int)(Int128)parameters[0], (int)(Int128)parameters[1], CastToDictionaryIntTupleStringInt(parameters[2])),
-                "_fourcc" => FourCC(),
-                "_int" => Int((int)(Int128)parameters[0]),
-                "_null" => Null(),
-                "_optional" => Optional((int)(Int128)parameters[0]),
-                "_real32" => Real32(),
-                "_real64" => Real64(),
-                "_struct" => Struct((List<(string Arg1, Int128 Arg2, Int128 Arg3)>)parameters[0]),
-                _ => throw new InvalidOperationException($"Unknown method '{methodName}'")
+                ProtocolTypeArray(Int128 arg1, Int128 arg2, Int128 typeid) => Array((int)arg1, (int)typeid),
+                ProtocolTypeBitArray(Int128 arg1, Int128 arg2) => BitArray((int)arg1),
+                ProtocolTypeBlob(Int128 arg1, Int128 arg2) => Blob((int)arg1),
+                ProtocolTypeBool => Bool(),
+                ProtocolTypeChoice(Int128 arg1, Int128 arg2, List<(string Arg1, Int128 Arg2)> arg3) => Choice((int)arg1, (int)arg2, CastToDictionaryIntTupleStringInt(arg3)),
+                ProtocolTypeFourcc => FourCC(),
+                ProtocolTypeInt(Int128 arg1, Int128 arg2) => Int((int)arg1),
+                ProtocolTypeNull => Null(),
+                ProtocolTypeOptional(Int128 arg1) => Optional((int)arg1),
+                ProtocolTypeStruct(List<(string Arg1, Int128 Arg2, Int128 Arg3)> arg1) => Struct(arg1),
+                var x => throw new InvalidOperationException($"Unknown method '{x.Type}'")
             };
 
             return result;

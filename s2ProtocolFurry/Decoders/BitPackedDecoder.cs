@@ -34,7 +34,7 @@ public class BitPackedDecoder : BaseDecoder, IDecoder
             ProtocolTypeBitArray(Int128 arg1, Int128 arg2) => BitArray(((int)arg1, (int)arg2)),
             ProtocolTypeBlob(Int128 arg1, Int128 arg2) => Blob(((int)arg1, (int)arg2)),
             ProtocolTypeBool => Bool(),
-            ProtocolTypeChoice(Int128 arg1, Int128 arg2, List<(string Arg1, Int128 Arg2)> arg3) => Choice(((int)arg1, (int)arg2), ProcessListOrDictionary(arg3)),
+            ProtocolTypeChoice(Int128 arg1, Int128 arg2, List<(string Arg1, Int128 Arg2)> arg3) => Choice(((int)arg1, (int)arg2), arg3),
             ProtocolTypeFourcc => FourCC(),
             ProtocolTypeInt(Int128 arg1, Int128 arg2) => Int(((int)arg1, (int)arg2)),
             ProtocolTypeNull => Null(),
@@ -60,22 +60,7 @@ public class BitPackedDecoder : BaseDecoder, IDecoder
     {
         return _buffer.UsedBits();
     }
-
-    private int VInt()
-    {
-        int b = _buffer.ReadBits(8);
-        bool negative = (b & 1) != 0;
-        int result = (b >> 1) & 0x3f;
-        int bits = 6;
-        while ((b & 0x80) != 0)
-        {
-            b = _buffer.ReadBits(8);
-            result |= (b & 0x7f) << bits;
-            bits += 7;
-        }
-        return negative ? -result : result;
-    }
-
+    
     private object[] Array((int min, int max) bounds, int typeId)
     {
         int length = Int(bounds);
@@ -87,12 +72,12 @@ public class BitPackedDecoder : BaseDecoder, IDecoder
         return instances;
     }
 
-    private Tuple<int, BitArray> BitArray((int min, int max) bounds)
+    private (int, int) BitArray((int min, int max) bounds)
     {
-        int length = Int(bounds);       
-        var bitArrayBytes = _buffer.ReadAlignedBytes((length + 7) / 8);
-        var bitArray = new BitArray(bitArrayBytes);
-        return Tuple.Create(length, bitArray);
+        int length = Int(bounds);
+        var bits = _buffer.ReadBits(length);
+
+        return (length, bits);
     }
 
     private byte[] Blob((int min, int max) bounds)
@@ -106,28 +91,27 @@ public class BitPackedDecoder : BaseDecoder, IDecoder
         return Int((0, 1)) != 0;
     }
 
-    private Dictionary<string, object> Choice((int min, int max) bounds, List<Tuple<string, int>> fields)
+    private Dictionary<string, object> Choice((int min, int max) bounds, List<(string Arg1, Int128 Arg2)> fields)
     {       
         int tag = Int(bounds);
         
-        var field = fields.FirstOrDefault(f => f.Item2 == tag);
-
-        if (field == null)
-        {            
-            SkipInstance();
-            return new Dictionary<string, object>();
+        if (tag < 0 || tag >= fields.Count)
+        {
+            throw new IndexOutOfRangeException();           
         }
-        
+
+        var field = fields[tag];
+
         var result = new Dictionary<string, object>
         {
-            [field.Item1] = Instance(field.Item2)
+            [field.Arg1] = Instance((int)field.Arg2)
         };
         return result;
     }
 
     private byte[] FourCC()
     {
-        return _buffer.ReadAlignedBytes(4);
+        return _buffer.ReadUnalignedBytes(4);
     }
 
     private int Int((int, int) bounds)
@@ -148,13 +132,13 @@ public class BitPackedDecoder : BaseDecoder, IDecoder
 
     private float Real32()
     {
-        var bytes = _buffer.ReadAlignedBytes(4);
+        var bytes = _buffer.ReadUnalignedBytes(4);
         return BitConverter.ToSingle(bytes, 0);
     }
 
     private double Real64()
     {
-        var bytes = _buffer.ReadAlignedBytes(8);
+        var bytes = _buffer.ReadUnalignedBytes(8);
         return BitConverter.ToDouble(bytes, 0);
     }
 
@@ -197,61 +181,5 @@ public class BitPackedDecoder : BaseDecoder, IDecoder
         }
 
         return result;
-    }
-
-    private void SkipInstance()
-    {
-        int skip = _buffer.ReadBits(8);
-        switch (skip)
-        {
-            case 0: // array
-                int length = Int((0, 0));
-                for (int i = 0; i < length; i++)
-                {
-                    SkipInstance();
-                }
-                break;
-            case 1: // bitblob
-                int bitLength = Int((0, 0));
-                _buffer.ReadAlignedBytes((bitLength + 7) / 8);
-                break;
-            case 2: // blob
-                int blobLength = Int((0, 0));
-                _buffer.ReadAlignedBytes(blobLength);
-                break;
-            case 3: // choice
-                Int((0, 0));
-                SkipInstance();
-                break;
-            case 4: // optional
-                bool exists = Bool();
-                if (exists)
-                {
-                    SkipInstance();
-                }
-                break;
-            case 5: // struct
-                int structLength = Int((0, 0));
-                for (int i = 0; i < structLength; i++)
-                {
-                    Int((0, 0));
-                    SkipInstance();
-                }
-                break;
-            case 6: // u8
-                _buffer.ReadAlignedBytes(1);
-                break;
-            case 7: // u32
-                _buffer.ReadAlignedBytes(4);
-                break;
-            case 8: // u64
-                _buffer.ReadAlignedBytes(8);
-                break;
-            case 9: // vint
-                Int((0, 0));
-                break;
-            default:
-                throw new InvalidOperationException("Unknown skip type.");
-        }
     }
 }

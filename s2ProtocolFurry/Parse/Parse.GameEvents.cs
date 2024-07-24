@@ -1,6 +1,4 @@
 ﻿using s2ProtocolFurry.Events.GameEvents;
-using s2ProtocolFurry.NNetGame;
-using System.Collections.Generic;
 
 namespace s2ProtocolFurry.Parse
 {

@@ -43,7 +43,7 @@ namespace s2ProtocolFurry.Decoder
                 ProtocolTypeBitArray(Int128 arg1, Int128 arg2) => BitArray((int)arg1),
                 ProtocolTypeBlob(Int128 arg1, Int128 arg2) => Blob((int)arg1),
                 ProtocolTypeBool => Bool(),
-                ProtocolTypeChoice(Int128 arg1, Int128 arg2, List<(string Arg1, Int128 Arg2)> arg3) => Choice((int)arg1, (int)arg2, CastToDictionaryIntTupleStringInt(arg3)),
+                ProtocolTypeChoice(Int128 arg1, Int128 arg2, List<(string Arg1, Int128 Arg2)> arg3) => Choice((int)arg1, (int)arg2, arg3),
                 ProtocolTypeFourcc => FourCC(),
                 ProtocolTypeInt(Int128 arg1, Int128 arg2) => Int((int)arg1),
                 ProtocolTypeNull => Null(),
@@ -148,20 +148,20 @@ namespace s2ProtocolFurry.Decoder
             });
         }
         
-        private Dictionary<string, object> Choice(int mix, int max, Dictionary<int, Tuple<string, int>> fields)
+        private Dictionary<string, object> Choice(int mix, int max, List<(string Arg1, Int128 Arg2)> fields)
         {
             _debugOutput.AppendLine($"{nameof(Choice)}({nameof(mix)}: {mix}, {nameof(max)}: {max}, {nameof(fields)}: (count: {fields.Count}))");
             return _debugOutput.Indented(() =>
             {
                 ExpectSkip(3);
                 int tag = VInt();
-                if (!fields.ContainsKey(tag))
+                if (tag < 0 || tag >= fields.Count)
                 {
                     SkipInstance();
                     return new Dictionary<string, object>();
                 }
                 var field = fields[tag];
-                return new Dictionary<string, object> { { field.Item1, Instance(field.Item2) } };
+                return new Dictionary<string, object> { { field.Item1, Instance((int)field.Item2) } };
             });
         }
 

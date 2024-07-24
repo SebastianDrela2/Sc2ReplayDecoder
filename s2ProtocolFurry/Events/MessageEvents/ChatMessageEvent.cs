@@ -1,6 +1,6 @@
 ﻿namespace s2ProtocolFurry.Events.MessageEvents
 {
-    internal class ChatMessageEvent
+    public class ChatMessageEvent
     {
         public ChatMessageEvent(int recipient, int id, string msg, int loop)
         {

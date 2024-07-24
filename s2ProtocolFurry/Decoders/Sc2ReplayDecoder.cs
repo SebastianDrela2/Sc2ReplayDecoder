@@ -1,7 +1,10 @@
 ﻿using MPQArchive.MPQ;
 using s2ProtocolFurry.Decoders;
+using s2ProtocolFurry.Events.MetaData;
 using s2ProtocolFurry.NNetGame;
 using s2ProtocolFurry.Protocol;
+using System.Text.Json;
+using System.Text;
 
 namespace s2ProtocolFurry.Decoder
 {
@@ -9,28 +12,26 @@ namespace s2ProtocolFurry.Decoder
     {               
         private readonly ProtocolImporter _protocolImporter;
         private readonly EventDecoder _eventDecoder;
-        private readonly MPQArchive.MPQ.ReceivedData.MPQArchive _mpqArchive;              
-        private readonly string _path;
+        private MPQArchive.MPQ.ReceivedData.MPQArchive _mpqArchive;              
 
         private List<ProtocolTypeInfo> _typeInfos;
 
-        public Sc2ReplayDecoder(string path, string protocolVersionsDir)
-        {
-            _path = path;
-            using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-            var mpqReader = new MPQReader(stream);
-
-            _mpqArchive = mpqReader.Read();
+        public Sc2ReplayDecoder(string protocolVersionsDir)
+        {          
             _eventDecoder = new EventDecoder();
             _protocolImporter = new ProtocolImporter(protocolVersionsDir);
 
             _typeInfos = _protocolImporter.GetTypeInfos();
         }
 
-        public Sc2Replay DecodeSc2Replay()
-        {
-            var replay = new Sc2Replay(_path);
+        public Sc2Replay DecodeSc2Replay(string path)
+        {           
+            using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+            var mpqReader = new MPQReader(stream);
+            _mpqArchive = mpqReader.Read();                    
+
+            var replay = new Sc2Replay(path);
             var replayHeader = DecodeReplayHeader();
 
             var version = replayHeader["m_version"] as Dictionary<string, object>;
@@ -50,6 +51,9 @@ namespace s2ProtocolFurry.Decoder
             var gameEvents = DecodeReplayGameEvents();
             replay.GameEvents = Parse.Parse.GameEvents(gameEvents);
 
+            var metaData = DecodeReplayMetaData();
+            replay.MetaData = metaData;
+
             var messages = DecodeReplayMessageEvents();
             Parse.Parse.SetMessages(messages, replay);
 
@@ -67,25 +71,25 @@ namespace s2ProtocolFurry.Decoder
             return replay;
         }
 
-        public Dictionary<string, object> DecodeReplayHeader()
+        private Dictionary<string, object> DecodeReplayHeader()
         {
             var decoder = new VersionedDecoder(_mpqArchive.MPQUserData.Content, _typeInfos);
             return (Dictionary<string, object>)decoder.Instance(EventMappedTypes.ReplayHeaderTypeId);
         }
 
-        public Dictionary<string, object> DecodeReplayDetails()
+        private Dictionary<string, object> DecodeReplayDetails()
         {
             var decoder = new VersionedDecoder(GetListItemContent("replay.details"), _typeInfos);
             return (Dictionary<string, object>)decoder.Instance(EventMappedTypes.GameDetailsTypeId);
         }
 
-        public Dictionary<string, object> DecodeReplayInitData()
+        private Dictionary<string, object> DecodeReplayInitData()
         {
             var decoder = new BitPackedDecoder(GetListItemContent("replay.initData"), _typeInfos);
             return (Dictionary<string, object>)decoder.Instance(EventMappedTypes.ReplayInitDataTypeId);
         }
 
-        public IEnumerable<Dictionary<string, object>> DecodeReplayGameEvents()
+        private IEnumerable<Dictionary<string, object>> DecodeReplayGameEvents()
         {
             var decoder = new BitPackedDecoder(GetListItemContent("replay.game.events"), _typeInfos);
             foreach (var eventItem in _eventDecoder.DecodeEventStream(
@@ -95,7 +99,7 @@ namespace s2ProtocolFurry.Decoder
             }
         }
 
-        public IEnumerable<Dictionary<string, object>> DecodeReplayMessageEvents()
+        private IEnumerable<Dictionary<string, object>> DecodeReplayMessageEvents()
         {
             var decoder = new BitPackedDecoder(GetListItemContent("replay.message.events"), _typeInfos);
             foreach (var eventItem in _eventDecoder.DecodeEventStream(
@@ -113,6 +117,20 @@ namespace s2ProtocolFurry.Decoder
             {
                 yield return eventItem;
             }
+        }
+
+        private ReplayMetadata DecodeReplayMetaData()
+        {
+            var metaDataContent = GetListItemContent("replay.gamemetadata.json");
+
+            var meta_string = Encoding.UTF8.GetString(metaDataContent.ToArray());
+
+            if (meta_string != null)
+            {
+                return JsonSerializer.Deserialize<ReplayMetadata>(meta_string);               
+            }
+
+            return null;
         }
 
         private static int GetUnitIndex(int unitTagIndex, int unitTagRecycle)

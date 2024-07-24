@@ -10,9 +10,14 @@
             R = r;
         }
 
-        public int A { get; }
-        public int B { get; }
-        public int G { get; }
-        public int R { get; }
+        public PlayerColor()
+        {
+
+        }
+
+        public int A { get; set; }
+        public int B { get; set; }
+        public int G { get; set; }
+        public int R { get; set; }
     }
 }

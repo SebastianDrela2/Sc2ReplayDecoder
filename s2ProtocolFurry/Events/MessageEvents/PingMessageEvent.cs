@@ -1,6 +1,6 @@
 ﻿namespace s2ProtocolFurry.Events.MessageEvents
 {
-    internal class PingMessageEvent
+    public class PingMessageEvent
     {
         public PingMessageEvent(int recipient, int id, int loop, long x, long y)
         {

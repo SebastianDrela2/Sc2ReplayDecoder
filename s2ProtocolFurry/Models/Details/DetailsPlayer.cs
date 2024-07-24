@@ -14,7 +14,17 @@
             Result = result;
             Team = team;
             Toon = toon;
-            Slot = slot;
+            Slot = slot ;
+            if (name != null && name.Contains("<sp/>", StringComparison.Ordinal))
+            {
+                var ents = name.Split("<sp/>");
+                Name = ents[1];
+                ClanName = ents[0].Length > 8 ? ents[0][4..^4] : null;
+            }
+            else
+            {
+                Name = name ?? "";
+            }
         }
 
         public PlayerColor Color { get; }
@@ -28,5 +38,6 @@
         public int Team { get; }
         public Toon Toon { get; }
         public int Slot { get; }
+        public string? ClanName { get; init; }
     }
 }

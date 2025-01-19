@@ -29,34 +29,30 @@ public static partial class Parse
             trackerevents.Add(detailEvent);
         }
 
-        var events = new TrackerEvents(
-            trackerevents.OfType<SPlayerSetupEvent>().ToArray(),
-            trackerevents.OfType<SPlayerStatsEvent>().ToArray(),
-            trackerevents.OfType<SUnitBornEvent>().ToArray(),
-            trackerevents.OfType<SUnitDiedEvent>().ToArray(),
-            trackerevents.OfType<SUnitOwnerChangeEvent>().ToArray(),
-            trackerevents.OfType<SUnitPositionsEvent>().ToArray(),
-            trackerevents.OfType<SUnitTypeChangeEvent>().ToArray(),
-            trackerevents.OfType<SUpgradeEvent>().ToArray(),
-            trackerevents.OfType<SUnitInitEvent>().ToArray(),
-            trackerevents.OfType<SUnitDoneEvent>().ToArray()
-        );
-
-        return events;
+        return new TrackerEvents(trackerevents);
     }
 
     internal static void SetTrackerEventsUnitConnections(TrackerEvents trackerEvents)
     {
-        trackerEvents.SUnitBornEvents.ToList().ForEach(x => x.SUnitDiedEvent = trackerEvents.SUnitDiedEvents.FirstOrDefault(f => f.UnitIndex == x.UnitIndex));
-        trackerEvents.SUnitInitEvents.ToList().ForEach(x => x.SUnitDiedEvent = trackerEvents.SUnitDiedEvents.FirstOrDefault(f => f.UnitIndex == x.UnitIndex));
-        trackerEvents.SUnitInitEvents.ToList().ForEach(x => x.SUnitDoneEvent = trackerEvents.SUnitDoneEvents.FirstOrDefault(f => f.UnitIndex == x.UnitIndex));
-        trackerEvents.SUnitDiedEvents.ToList().ForEach(x => x.KillerUnitBornEvent = trackerEvents.SUnitBornEvents.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle));
-        trackerEvents.SUnitDiedEvents.ToList().ForEach(x => x.KillerUnitInitEvent = trackerEvents.SUnitInitEvents.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle));
+        foreach (SUnitInitEvent x in trackerEvents.SUnitInitEvents)
+        {
+            x.SUnitDiedEvent = trackerEvents.SUnitDiedEvents.GetValueOrDefault(x.UnitIndex);
+        }
+        foreach (SUnitInitEvent x in trackerEvents.SUnitInitEvents)
+        {
+            x.SUnitDiedEvent = trackerEvents.SUnitDiedEvents.GetValueOrDefault(x.UnitIndex);
+            x.SUnitDoneEvent = trackerEvents.SUnitDoneEvents.GetValueOrDefault(x.UnitIndex);
+        }
+        foreach (var (_, x) in trackerEvents.SUnitDiedEvents)
+        {
+            x.KillerUnitBornEvent = trackerEvents.SUnitBornEvents.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle);
+            x.KillerUnitInitEvent = trackerEvents.SUnitInitEvents.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle);
+        }
     }
 
     private static TrackerEvent GetTrackerEvent(Dictionary<string, object> dic)
     {
-        int playerId = GetInt(dic, "m_playerId");            
+        int playerId = GetInt(dic, "m_playerId");
         string type = GetString(dic, "_event");
         int bits = GetInt(dic, "_bits");
         uint gameloop = GetUInt(dic, "_gameloop");
@@ -164,12 +160,12 @@ public static partial class Parse
         int slotId = GetInt(dic, "m_slotId");
         return new SPlayerSetupEvent(trackerEvent, type, userId, slotId);
     }
-    
+
     private static SPlayerStatsEvent GetSPlayerStatsEvent(Dictionary<string, object> dic, TrackerEvent trackerEvent)
     {
         if (dic.ContainsKey("m_stats"))
         {
-           var statsDic = dic["m_stats"] as Dictionary<string, object>;
+            var statsDic = dic["m_stats"] as Dictionary<string, object>;
 
             if (statsDic != null)
             {

@@ -1,4 +1,8 @@
-﻿using s2ProtocolFurry.Events.TrackerEvents;
+﻿using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+using s2ProtocolFurry.Events.TrackerEvents;
 
 namespace s2ProtocolFurry.Parse;
 
@@ -6,48 +10,215 @@ public static partial class Parse
 {
     public static TrackerEvents Tracker(IEnumerable<Dictionary<string, object>> eventDicList)
     {
-        List<TrackerEvent> trackerevents = new();
-
+        TrackerEvents output = new();
         foreach (var eventDic in eventDicList)
         {
-            TrackerEvent trackerEvent = GetTrackerEvent(eventDic);
-
-            TrackerEvent detailEvent = trackerEvent.EventType switch
+            var trackerEvent = GetTrackerEvent(eventDic);
+            switch (trackerEvent.EventType)
             {
-                TrackerEventType.SPlayerSetupEvent => GetSPlayerSetupEvent(eventDic, trackerEvent),
-                TrackerEventType.SPlayerStatsEvent => GetSPlayerStatsEvent(eventDic, trackerEvent),
-                TrackerEventType.SUnitBornEvent => GetSUnitBornEvent(eventDic, trackerEvent),
-                TrackerEventType.SUnitDiedEvent => GetSUnitDiedEvent(eventDic, trackerEvent),
-                TrackerEventType.SUnitOwnerChangeEvent => GetSUnitOwnerChangeEvent(eventDic, trackerEvent),
-                TrackerEventType.SUnitPositionsEvent => GetSUnitPositionsEvent(eventDic, trackerEvent),
-                TrackerEventType.SUnitTypeChangeEvent => GetSUnitTypeChangeEvent(eventDic, trackerEvent),
-                TrackerEventType.SUpgradeEvent => GetSUpgradeEvent(eventDic, trackerEvent),
-                TrackerEventType.SUnitInitEvent => GetSUnitInitEvent(eventDic, trackerEvent),
-                TrackerEventType.SUnitDoneEvent => GetSUnitDoneEvent(eventDic, trackerEvent),
-                _ => GetUnknownEvent(eventDic, trackerEvent)
-            };
-            trackerevents.Add(detailEvent);
+                case TrackerEventType.SPlayerSetupEvent: output.SPlayerSetupEvents.Add(GetSPlayerSetupEvent(eventDic, trackerEvent)); break;
+                case TrackerEventType.SPlayerStatsEvent: output.SPlayerStatsEvents.Add(GetSPlayerStatsEvent(eventDic, trackerEvent)); break;
+                case TrackerEventType.SUnitBornEvent: output.SUnitBornEvents.Add(GetSUnitBornEvent(eventDic, trackerEvent)); break;
+                case TrackerEventType.SUnitDiedEvent: output.SUnitDiedEvents.Add(GetSUnitDiedEvent(eventDic, trackerEvent)); break;
+                case TrackerEventType.SUnitOwnerChangeEvent: output.SUnitOwnerChangeEvents.Add(GetSUnitOwnerChangeEvent(eventDic, trackerEvent)); break;
+                case TrackerEventType.SUnitPositionsEvent: output.SUnitPositionsEvents.Add(GetSUnitPositionsEvent(eventDic, trackerEvent)); break;
+                case TrackerEventType.SUnitTypeChangeEvent: output.SUnitTypeChangeEvents.Add(GetSUnitTypeChangeEvent(eventDic, trackerEvent)); break;
+                case TrackerEventType.SUpgradeEvent: output.SUpgradeEvents.Add(GetSUpgradeEvent(eventDic, trackerEvent)); break;
+                case TrackerEventType.SUnitInitEvent: output.SUnitInitEvents.Add(GetSUnitInitEvent(eventDic, trackerEvent)); break;
+                case TrackerEventType.SUnitDoneEvent: output.SUnitDoneEvents.Add(GetSUnitDoneEvent(eventDic, trackerEvent)); break;
+                default: GetUnknownEvent(eventDic, trackerEvent); break;
+            }
         }
 
-        return new TrackerEvents(trackerevents);
+        output.SUnitDiedEvents.Span.Sort((x, y) => x.UnitIndex.CompareTo(y.UnitIndex));
+        output.SUnitDoneEvents.Span.Sort((x, y) => x.UnitIndex.CompareTo(y.UnitIndex));
+        output.SUnitBornEvents.Span.Sort((x, y) => (x.UnitTagIndex, x.UnitTagRecycle).CompareTo((y.UnitTagIndex, y.UnitTagRecycle)));
+        output.SUnitInitEvents.Span.Sort((x, y) => (x.UnitTagIndex, x.UnitTagRecycle).CompareTo((y.UnitTagIndex, y.UnitTagRecycle)));
+
+        return output;
     }
 
+    [InlineArray(4)]
+    struct Uple<T>
+    {
+        private T _elem;
+    }
+    ref struct Taple<T>(T died, T done, T born, T init)
+        where T : allows ref struct
+    {
+        public T Died = died;
+        public T Done = done;
+        public T Born = born;
+        public T Init = init;
+    }
+    ref struct Taple<T1, T2, T3, T4>(T1 died, T2 done, T3 born, T4 init)
+        where T1 : allows ref struct
+        where T2 : allows ref struct
+        where T3 : allows ref struct
+        where T4 : allows ref struct
+    {
+        public T1 Died = died;
+        public T2 Done = done;
+        public T3 Born = born;
+        public T4 Init = init;
+    }
+    static Taple<T1, T2, T3, T4> make_taple<T1, T2, T3, T4>(T1 died, T2 done, T3 born, T4 init)
+        where T1 : allows ref struct
+        where T2 : allows ref struct
+        where T3 : allows ref struct
+        where T4 : allows ref struct
+    {
+        return new(died, done, born, init);
+    }
+    static Taple<T> make_taple<T>(T died, T done, T born, T init)
+        where T : allows ref struct
+    {
+        return new(died, done, born, init);
+    }
     internal static void SetTrackerEventsUnitConnections(TrackerEvents trackerEvents)
     {
-        foreach (SUnitInitEvent x in trackerEvents.SUnitInitEvents)
-        {
-            x.SUnitDiedEvent = trackerEvents.SUnitDiedEvents.GetValueOrDefault(x.UnitIndex);
+        var data = make_taple(
+            trackerEvents.SUnitDiedEvents.Span,
+            trackerEvents.SUnitDoneEvents.Span,
+            trackerEvents.SUnitBornEvents.Span,
+            trackerEvents.SUnitInitEvents.Span
+        );
+
+        if (data.Died.Length is 0) throw new NotImplementedException();
+        if (data.Done.Length is 0) throw new NotImplementedException();
+        if (data.Born.Length is 0) throw new NotImplementedException();
+        if (data.Init.Length is 0) throw new NotImplementedException();
+
+        Vector256<int> i = Vector256<int>.Zero;
+        Vector256<int> len = Vector256.Create([data.Died.Length, data.Done.Length, data.Born.Length, data.Init.Length]);
+        Vector256<int> has_next = Vector256.LessThan(i, len);
+
+        static void Unborn(Vector256<int> i, Taple<Span<SUnitDiedEvent>, Span<SUnitDoneEvent>, Span<SUnitBornEvent>, Span<SUnitInitEvent>> data) {
+            data.Born[i[2]].SUnitDiedEvent = data.Died[i[0]];
         }
-        foreach (SUnitInitEvent x in trackerEvents.SUnitInitEvents)
-        {
-            x.SUnitDiedEvent = trackerEvents.SUnitDiedEvents.GetValueOrDefault(x.UnitIndex);
-            x.SUnitDoneEvent = trackerEvents.SUnitDoneEvents.GetValueOrDefault(x.UnitIndex);
+        static void Uninit(Vector256<int> i, Taple<Span<SUnitDiedEvent>, Span<SUnitDoneEvent>, Span<SUnitBornEvent>, Span<SUnitInitEvent>> data) {
+            data.Init[i[3]].SUnitDiedEvent = data.Died[i[0]];
         }
-        foreach (var (_, x) in trackerEvents.SUnitDiedEvents)
-        {
-            x.KillerUnitBornEvent = trackerEvents.SUnitBornEvents.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle);
-            x.KillerUnitInitEvent = trackerEvents.SUnitInitEvents.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle);
+        static void Completed(Vector256<int> i, Taple<Span<SUnitDiedEvent>, Span<SUnitDoneEvent>, Span<SUnitBornEvent>, Span<SUnitInitEvent>> data) {
+            data.Init[i[3]].SUnitDoneEvent = data.Done[i[1]];
         }
+        
+        Vector256<int> keys = Vector256.Create([
+            data.Died[0].UnitIndex,
+            data.Done[0].UnitIndex,
+            data.Born[0].UnitIndex,
+            data.Init[0].UnitIndex
+        ]);
+        
+        var min = Vector256.Create(int.Min(keys[0], int.Min(keys[1], int.Min(keys[2], keys[3]))));
+        while (has_next == Vector256<int>.Zero)
+        {
+            var order = Vector256.Equals(keys, min);
+            var x = Avx2.And(has_next, order).ExtractMostSignificantBits() & 0b_00001000_00000100_00000010_00000001;
+            x |= x >> 16;
+            x |= x >> 8;
+            x &= 0b1111;
+            switch (x)
+            {
+                case 0b_0_0_0_0: break;
+                case 0b_0_0_0_1:
+                    i = Vector256.Add(i, Vector256.Create([0, 0, 0, 1]));
+                    break;
+                case 0b_0_0_1_0:
+                    i = Vector256.Add(i, Vector256.Create([0, 0, 1, 0]));
+                    break;
+                case 0b_0_0_1_1:
+                    i = Vector256.Add(i, Vector256.Create([0, 0, 1, 1]));
+                    break;
+                case 0b_0_1_0_0:
+                    i = Vector256.Add(i, Vector256.Create([0, 1, 0, 0]));
+                    break;
+                case 0b_0_1_0_1:
+                    Unborn(i, data);
+                    i = Vector256.Add(i, Vector256.Create([0, 1, 0, 1]));
+                    break;
+                case 0b_0_1_1_0:
+                    i = Vector256.Add(i, Vector256.Create([0, 1, 1, 0]));
+                    break;
+                case 0b_0_1_1_1:
+                    Unborn(i, data);
+                    i = Vector256.Add(i, Vector256.Create([0, 1, 1, 1]));
+                    break;
+                case 0b_1_0_0_0:
+                    i = Vector256.Add(i, Vector256.Create([1, 0, 0, 0]));
+                    break;
+                case 0b_1_0_0_1:
+                    Uninit(i, data);
+                    i = Vector256.Add(i, Vector256.Create([1, 0, 0, 1]));
+                    break;
+                case 0b_1_0_1_0:
+                    Completed(i, data);
+                    i = Vector256.Add(i, Vector256.Create([1, 0, 1, 0]));
+                    break;
+                case 0b_1_0_1_1:
+                    Uninit(i, data);
+                    Completed(i, data);
+                    i = Vector256.Add(i, Vector256.Create([1, 0, 1, 1]));
+                    break;
+                case 0b_1_1_0_0:
+                    i = Vector256.Add(i, Vector256.Create([1, 1, 0, 0]));
+                    break;
+                case 0b_1_1_0_1:
+                    Uninit(i, data);
+                    Unborn(i, data);
+                    i = Vector256.Add(i, Vector256.Create([1, 1, 0, 1]));
+                    break;
+                case 0b_1_1_1_0:
+                    Completed(i, data);
+                    i = Vector256.Add(i, Vector256.Create([1, 1, 1, 0]));
+                    break;
+                case 0b_1_1_1_1:
+                    Unborn(i, data);
+                    Uninit(i, data);
+                    Completed(i, data);
+                    i = Vector256.Add(i, Vector256.Create([1, 1, 1, 1]));
+                    break;
+            }
+
+            has_next = Vector256.LessThan(i, len);
+            keys = Vector256.Create([
+                has_next[0] is 0 ? int.MinValue : data.Died[i[0]].UnitIndex,
+                has_next[1] is 0 ? int.MinValue : data.Done[i[1]].UnitIndex,
+                has_next[2] is 0 ? int.MinValue : data.Born[i[2]].UnitIndex,
+                has_next[3] is 0 ? int.MinValue : data.Init[i[3]].UnitIndex
+            ]);
+            min = Vector256.Create(int.Min(keys[0], int.Min(keys[1], int.Min(keys[2], keys[3]))));
+        }
+
+        // case (0, _, 0, _):
+        //     items.Born.SUnitDiedEvent = items.Died;
+        //     break;
+        // case (0, _, _, 0):
+        //     items.Init.SUnitDiedEvent = items.Died;
+        //     break;
+        // case (_, 0, _, 0):
+        //     items.Init.SUnitDoneEvent = items.Done;
+        //     break;
+
+        /*
+            0b_1_0_1_0
+            0b_1_0_0_1
+            0b_0_1_0_1
+
+            (Died_0 == Born_2) => Born_2.Died_0 = Died_0
+            (Died_0 == Init_3) => Init_3.Died_0 = Died_0
+            (Done_1 == Init_3) => Init_3.Done_1 = Done_1
+        
+            Died
+            Done
+            Born
+            Init
+        */
+        // trackerEvents.SUnitBornEvents.data.Select(x => x.SUnitDiedEvent = trackerEvents.SUnitDiedEvents.data.FirstOrDefault(f => f.UnitIndex == x.UnitIndex));
+        // trackerEvents.SUnitInitEvents.data.Select(x => x.SUnitDiedEvent = trackerEvents.SUnitDiedEvents.data.FirstOrDefault(f => f.UnitIndex == x.UnitIndex));
+        // trackerEvents.SUnitInitEvents.data.Select(x => x.SUnitDoneEvent = trackerEvents.SUnitDoneEvents.data.FirstOrDefault(f => f.UnitIndex == x.UnitIndex));
+        trackerEvents.SUnitDiedEvents.data.Select(x => x.KillerUnitBornEvent = trackerEvents.SUnitBornEvents.data.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle));
+        trackerEvents.SUnitDiedEvents.data.Select(x => x.KillerUnitInitEvent = trackerEvents.SUnitInitEvents.data.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle));
     }
 
     private static TrackerEvent GetTrackerEvent(Dictionary<string, object> dic)

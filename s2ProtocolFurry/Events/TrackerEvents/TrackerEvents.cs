@@ -5,10 +5,10 @@ namespace s2ProtocolFurry.Events.TrackerEvents;
 
 public struct RefList<T>()
 {
-    public T[] data = new T[64];
+    private T[] data = new T[64];
     public int size = 0;
-
-    public readonly Span<T> Span => data.AsSpan(0, size);
+	public readonly ArraySegment<T> Data => new(data, 0, size);
+	public readonly Span<T> Span => data.AsSpan(0, size);
     public readonly int Length => size;
     public readonly int Capacity => data.Length;
     public readonly ref T this[int index] => ref data[index];

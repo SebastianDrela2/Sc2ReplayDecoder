@@ -217,8 +217,8 @@ public static partial class Parse
         // trackerEvents.SUnitBornEvents.data.Select(x => x.SUnitDiedEvent = trackerEvents.SUnitDiedEvents.data.FirstOrDefault(f => f.UnitIndex == x.UnitIndex));
         // trackerEvents.SUnitInitEvents.data.Select(x => x.SUnitDiedEvent = trackerEvents.SUnitDiedEvents.data.FirstOrDefault(f => f.UnitIndex == x.UnitIndex));
         // trackerEvents.SUnitInitEvents.data.Select(x => x.SUnitDoneEvent = trackerEvents.SUnitDoneEvents.data.FirstOrDefault(f => f.UnitIndex == x.UnitIndex));
-        trackerEvents.SUnitDiedEvents.data.Select(x => x.KillerUnitBornEvent = trackerEvents.SUnitBornEvents.data.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle));
-        trackerEvents.SUnitDiedEvents.data.Select(x => x.KillerUnitInitEvent = trackerEvents.SUnitInitEvents.data.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle));
+        trackerEvents.SUnitDiedEvents.Data.Select(x => x.KillerUnitBornEvent = trackerEvents.SUnitBornEvents.Data.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle));
+        trackerEvents.SUnitDiedEvents.Data.Select(x => x.KillerUnitInitEvent = trackerEvents.SUnitInitEvents.Data.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle));
     }
 
     private static TrackerEvent GetTrackerEvent(Dictionary<string, object> dic)

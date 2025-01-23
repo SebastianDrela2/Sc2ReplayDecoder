@@ -8,10 +8,9 @@ using s2ProtocolFurry.Decoder;
 
 namespace s2ProtocolFurry.Events.TrackerEvents;
 
-public class TrackerEvents(EventDecoderBuffer storage, EventDecoderBuffer.UntypedKey[] buffer)
+public class TrackerEvents(EventDecoderBuffer storage)
 {
     public EventDecoderBuffer Storage = storage;
-    public EventDecoderBuffer.UntypedKey[] Buffer = buffer;
 
     public RefList<SPlayerSetupEvent> PlayerSetup => Storage.PlayerSetup.Data;
     public RefList<SPlayerStatsEvent> PlayerStats => Storage.PlayerStats.Data;

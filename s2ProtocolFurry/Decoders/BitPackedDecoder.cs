@@ -11,7 +11,7 @@ public class BitPackedDecoder : BaseDecoder, IDecoder
 
     public BitPackedDecoder(byte[] contents, List<ProtocolTypeInfo> typeInfos)
     {
-        _buffer = new BitPackedBuffer(contents) { DebugOutput = new() };
+        _buffer = new BitPackedBuffer(contents) { };
         _typeInfos = typeInfos;
     }
 

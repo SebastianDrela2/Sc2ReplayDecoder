@@ -24,6 +24,7 @@ public static class EventTransformer
     where TSelf : IEventTransformer<EventDecoderBuffer.UntypedKey>
   {
     var decoded = Parse.Parse.Tracker<TSelf, EventDecoderBuffer.UntypedKey>(transformer, eventDicList);
-    return new (transformer.Buffer, [..decoded]);
+    _ = decoded.Count();
+    return new (transformer.Buffer);
   }
 }

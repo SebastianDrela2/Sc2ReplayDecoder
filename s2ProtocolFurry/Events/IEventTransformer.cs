@@ -5,6 +5,7 @@ namespace s2ProtocolFurry.Events;
 
 public interface IEventTransformer<T>
 {
+  EventDecoderBuffer Buffer { get; }
   T Transform(EventHeader header, SPlayerSetupEvent value);
   T Transform(EventHeader header, SPlayerStatsEvent value);
   T Transform(EventHeader header, SUnitBornEvent value);
@@ -22,8 +23,7 @@ public static class EventTransformer
   public static TrackerEvents.TrackerEvents ParseTracker<TSelf>(this TSelf transformer, IEnumerable<Dictionary<string, object>> eventDicList)
     where TSelf : IEventTransformer<EventDecoderBuffer.UntypedKey>
   {
-    return new TrackerEvents.TrackerEvents() {
-      Data = [..Parse.Parse.Tracker<TSelf, EventDecoderBuffer.UntypedKey>(transformer, eventDicList)]
-    };
+    var decoded = Parse.Parse.Tracker<TSelf, EventDecoderBuffer.UntypedKey>(transformer, eventDicList);
+    return new (transformer.Buffer, [..decoded]);
   }
 }

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace MPQArchive.MPQ
 {
-    public class MPQReader(FileStream stream) : IDisposable
+    public class MPQReader(Stream stream) : IDisposable
     {
         private const uint MagicHeader = 0x1A_51_50_4D;
         private const uint MagicShunt = 0x1B_51_50_4D;

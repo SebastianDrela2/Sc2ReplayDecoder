@@ -38,14 +38,6 @@ public static partial class Parse
             };
         });
     }
-    internal static void SetTrackerEventsUnitConnections(TrackerEvents trackerEvents)
-    {
-        trackerEvents.SUnitBornEvents.Data.Select(x => x.SUnitDiedEvent = trackerEvents.SUnitDiedEvents.Data.FirstOrDefault(f => f.UnitIndex == x.UnitIndex));
-        trackerEvents.SUnitInitEvents.Data.Select(x => x.SUnitDiedEvent = trackerEvents.SUnitDiedEvents.Data.FirstOrDefault(f => f.UnitIndex == x.UnitIndex));
-        trackerEvents.SUnitInitEvents.Data.Select(x => x.SUnitDoneEvent = trackerEvents.SUnitDoneEvents.Data.FirstOrDefault(f => f.UnitIndex == x.UnitIndex));
-        trackerEvents.SUnitDiedEvents.Data.Select(x => x.KillerUnitBornEvent = trackerEvents.SUnitBornEvents.Data.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle));
-        trackerEvents.SUnitDiedEvents.Data.Select(x => x.KillerUnitInitEvent = trackerEvents.SUnitInitEvents.Data.FirstOrDefault(f => f.UnitTagIndex == x.KillerUnitTagIndex && f.UnitTagRecycle == x.KillerUnitTagRecycle));
-    }
 
     private static SUnitDoneEvent GetSUnitDoneEvent(Dictionary<string, object> dic) => new()
     {

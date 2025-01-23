@@ -27,12 +27,17 @@ namespace s2ProtocolFurry.Decoder
 
         public Sc2Replay DecodeSc2Replay(string path)
         {
-            using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var bytes = File.ReadAllBytes(path);
+            using var stream = new MemoryStream(bytes);
 
+            return DecodeSc2Replay(stream);
+        }
+        public Sc2Replay DecodeSc2Replay(Stream stream)
+        {
             var mpqReader = new MPQReader(stream);
             _mpqArchive = mpqReader.Read();
 
-            var replay = new Sc2Replay(path);
+            var replay = new Sc2Replay();
             var replayHeader = DecodeReplayHeader();
 
             var version = replayHeader["m_version"] as Dictionary<string, object>;
@@ -59,49 +64,79 @@ namespace s2ProtocolFurry.Decoder
             var messages = DecodeReplayMessageEvents();
             Parse.Parse.SetMessages(messages, replay);
 
-            foreach (ref var f in ev.SUnitBornEvents) f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle);
-            foreach (ref var f in ev.SUnitInitEvents) f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle);
-            foreach (ref var f in ev.SUnitDiedEvents) f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle);
-            foreach (ref var f in ev.SUnitDoneEvents) f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle);
-            foreach (ref var f in ev.SUnitOwnerChangeEvents) f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle);
+            Connect1(
+                ev.UnitBorn.Data,
+                x => GetUnitIndex(x.UnitTagIndex, x.UnitTagRecycle),
+                (a, b) => a.UnitIndex = b
+            );
+            Connect1(
+                ev.UnitInit.Data,
+                x => GetUnitIndex(x.UnitTagIndex, x.UnitTagRecycle),
+                (a, b) => a.UnitIndex = b
+            );
+            Connect1(
+                ev.UnitDied.Data,
+                x => GetUnitIndex(x.UnitTagIndex, x.UnitTagRecycle),
+                (a, b) => a.UnitIndex = b
+            );
+            Connect1(
+                ev.UnitDone.Data,
+                x => GetUnitIndex(x.UnitTagIndex, x.UnitTagRecycle),
+                (a, b) => a.UnitIndex = b
+            );
+            Connect1(
+                ev.UnitOwnerChange.Data,
+                x => GetUnitIndex(x.UnitTagIndex, x.UnitTagRecycle),
+                (a, b) => a.UnitIndex = b
+            );
 
             Connect(
-                ev.SUnitBornEvents.Data,
-                ev.SUnitDiedEvents.Data,
+                ev.UnitBorn.Data,
+                ev.UnitDied.Data,
                 x => x.UnitIndex,
                 x => x.UnitIndex,
                 (a, b) => a.SUnitDiedEvent = b
             );
             Connect(
-                ev.SUnitInitEvents.Data,
-                ev.SUnitDiedEvents.Data,
+                ev.UnitInit.Data,
+                ev.UnitDied.Data,
                 x => x.UnitIndex,
                 x => x.UnitIndex,
                 (a, b) => a.SUnitDiedEvent = b
             );
             Connect(
-                ev.SUnitInitEvents.Data,
-                ev.SUnitDoneEvents.Data,
+                ev.UnitInit.Data,
+                ev.UnitDone.Data,
                 x => x.UnitIndex,
                 x => x.UnitIndex,
                 (a, b) => a.SUnitDoneEvent = b
             );
             Connect(
-                ev.SUnitDiedEvents.Data,
-                ev.SUnitBornEvents.Data,
+                ev.UnitDied.Data,
+                ev.UnitBorn.Data,
                 x => (x.KillerUnitTagIndex, x.KillerUnitTagRecycle),
                 x => (x.UnitTagIndex, x.UnitTagRecycle),
                 (a, b) => a.KillerUnitBornEvent = b
             );
             Connect(
-                ev.SUnitDiedEvents.Data,
-                ev.SUnitInitEvents.Data,
+                ev.UnitDied.Data,
+                ev.UnitInit.Data,
                 x => (x.KillerUnitTagIndex, x.KillerUnitTagRecycle),
                 x => (x.UnitTagIndex, x.UnitTagRecycle),
                 (a, b) => a.KillerUnitInitEvent = b
             );
 
             return replay;
+            static void Connect1<TFrom, TKey>(
+                IEnumerable<TFrom> xs,
+                Func<TFrom, TKey> selector1,
+                Connector<TFrom, TKey> action)
+            {
+                foreach (var (a, b) in xs.Select(x => (x, selector1(x))))
+                {
+                    action(a, b);
+                }
+            }
             static void Connect<T1, T2, TKey>(
                 IEnumerable<T1> xs,
                 IEnumerable<T2> ys,

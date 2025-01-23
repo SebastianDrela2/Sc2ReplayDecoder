@@ -1,29 +1,45 @@
-﻿namespace s2ProtocolFurry.Events.TrackerEvents;
+﻿using System.Buffers;
+using System.Buffers.Binary;
+using System.Collections.Immutable;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using s2ProtocolFurry.Decoder;
 
-public class TrackerEvents
+namespace s2ProtocolFurry.Events.TrackerEvents;
+
+public class TrackerEvents()
 {
-    public TrackerEvents(SPlayerSetupEvent[] sPlayerSetupEvents, SPlayerStatsEvent[] sPlayerStatsEvents, SUnitBornEvent[] sUnitBornEvents, SUnitDiedEvent[] sUnitDiedEvents, SUnitOwnerChangeEvent[] sUnitOwnerChangeEvents, SUnitPositionsEvent[] sUnitPositionsEvents, SUnitTypeChangeEvent[] sUnitTypeChangeEvents, SUpgradeEvent[] sUpgradeEvents, SUnitInitEvent[] sUnitInitEvents, SUnitDoneEvent[] sUnitDoneEvents)
-    {
-        SPlayerSetupEvents = sPlayerSetupEvents;
-        SPlayerStatsEvents = sPlayerStatsEvents;
-        SUnitBornEvents = sUnitBornEvents;
-        SUnitDiedEvents = sUnitDiedEvents;
-        SUnitOwnerChangeEvents = sUnitOwnerChangeEvents;
-        SUnitPositionsEvents = sUnitPositionsEvents;
-        SUnitTypeChangeEvents = sUnitTypeChangeEvents;
-        SUpgradeEvents = sUpgradeEvents;
-        SUnitInitEvents = sUnitInitEvents;
-        SUnitDoneEvents = sUnitDoneEvents;
-    }
+    public EventDecoderBuffer.UntypedKey[] Data;
+    public RefList<SPlayerSetupEvent> SPlayerSetupEvents = new ();
+    public RefList<SPlayerStatsEvent> SPlayerStatsEvents = new ();
+    public RefList<SUnitBornEvent> SUnitBornEvents = new ();
+    public RefList<SUnitDiedEvent> SUnitDiedEvents = new ();
+    public RefList<SUnitOwnerChangeEvent> SUnitOwnerChangeEvents = new ();
+    public RefList<SUnitPositionsEvent> SUnitPositionsEvents = new ();
+    public RefList<SUnitTypeChangeEvent> SUnitTypeChangeEvents = new ();
+    public RefList<SUpgradeEvent> SUpgradeEvents = new ();
+    public RefList<SUnitInitEvent> SUnitInitEvents = new ();
+    public RefList<SUnitDoneEvent> SUnitDoneEvents = new ();
+    public SortKeys Keys;
 
-    public SPlayerSetupEvent[] SPlayerSetupEvents { get; }
-    public SPlayerStatsEvent[] SPlayerStatsEvents { get; }
-    public SUnitBornEvent[] SUnitBornEvents { get; }
-    public SUnitDiedEvent[] SUnitDiedEvents { get; }
-    public SUnitOwnerChangeEvent[] SUnitOwnerChangeEvents { get; }
-    public SUnitPositionsEvent[] SUnitPositionsEvents { get; }
-    public SUnitTypeChangeEvent[] SUnitTypeChangeEvents { get; }
-    public SUpgradeEvent[] SUpgradeEvents { get; }
-    public SUnitInitEvent[] SUnitInitEvents { get; }
-    public SUnitDoneEvent[] SUnitDoneEvents { get; }
+    public void BuildIndexes()
+    {
+        Keys.SUnitBornEvents_UnitIndex = [.. SUnitBornEvents.Data.Select(x => x.UnitIndex)];
+        Keys.SUnitDiedEvents_UnitIndex = [.. SUnitDiedEvents.Data.Select(x => x.UnitIndex)];
+        Keys.SUnitInitEvents_UnitIndex = [.. SUnitInitEvents.Data.Select(x => x.UnitIndex)];
+        Keys.SUnitDoneEvents_UnitIndex = [.. SUnitDoneEvents.Data.Select(x => x.UnitIndex)];
+
+        Keys.SUnitBornEvents_UnitIndex.AsSpan().Sort(SUnitDoneEvents.Span);
+        Keys.SUnitDiedEvents_UnitIndex.AsSpan().Sort(SUnitDiedEvents.Span);
+        Keys.SUnitInitEvents_UnitIndex.AsSpan().Sort(SUnitInitEvents.Span);
+        Keys.SUnitDoneEvents_UnitIndex.AsSpan().Sort(SUnitDoneEvents.Span);
+    }
+    public struct SortKeys
+    {
+        public int[] SUnitBornEvents_UnitIndex;
+        public int[] SUnitDiedEvents_UnitIndex;
+        public int[] SUnitInitEvents_UnitIndex;
+        public int[] SUnitDoneEvents_UnitIndex;
+    }
 }

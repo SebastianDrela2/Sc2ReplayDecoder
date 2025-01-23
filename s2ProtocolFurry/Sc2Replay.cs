@@ -1,4 +1,6 @@
-﻿using s2ProtocolFurry.Events.GameEvents;
+﻿global using s2ProtocolFurry.Collections;
+
+using s2ProtocolFurry.Events.GameEvents;
 using s2ProtocolFurry.Events.InitEvents;
 using s2ProtocolFurry.Events.MessageEvents;
 using s2ProtocolFurry.Events.MetaData;

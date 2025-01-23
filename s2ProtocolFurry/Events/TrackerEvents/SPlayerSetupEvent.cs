@@ -1,18 +1,8 @@
-﻿namespace s2ProtocolFurry.Events.TrackerEvents
-{
-    public class SPlayerSetupEvent : TrackerEvent
-    {
-        public SPlayerSetupEvent(TrackerEvent trackerEvent, int type, int? userId, int slotId) : base(trackerEvent)
-        {
-            TrackerEvent = trackerEvent;
-            Type = type;
-            UserId = userId;
-            SlotId = slotId;
-        }
+﻿namespace s2ProtocolFurry.Events.TrackerEvents;
 
-        public TrackerEvent TrackerEvent { get; }
-        public int Type { get; }
-        public int? UserId { get; }
-        public int SlotId { get; }
-    }
+public class SPlayerSetupEvent
+{
+    public int Type { get; init; }
+    public int? UserId { get; init; }
+    public int SlotId { get; init; }
 }

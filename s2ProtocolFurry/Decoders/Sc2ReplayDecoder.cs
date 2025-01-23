@@ -5,19 +5,20 @@ using s2ProtocolFurry.NNetGame;
 using s2ProtocolFurry.Protocol;
 using System.Text.Json;
 using System.Text;
+using s2ProtocolFurry.Events;
 
 namespace s2ProtocolFurry.Decoder
 {
     public class Sc2ReplayDecoder
-    {               
+    {
         private readonly ProtocolImporter _protocolImporter;
         private readonly EventDecoder _eventDecoder;
-        private MPQArchive.MPQ.ReceivedData.MPQArchive _mpqArchive;              
+        private MPQArchive.MPQ.ReceivedData.MPQArchive _mpqArchive;
 
         private List<ProtocolTypeInfo> _typeInfos;
 
         public Sc2ReplayDecoder(string protocolVersionsDir)
-        {          
+        {
             _eventDecoder = new EventDecoder();
             _protocolImporter = new ProtocolImporter(protocolVersionsDir);
 
@@ -25,11 +26,11 @@ namespace s2ProtocolFurry.Decoder
         }
 
         public Sc2Replay DecodeSc2Replay(string path)
-        {           
+        {
             using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 
             var mpqReader = new MPQReader(stream);
-            _mpqArchive = mpqReader.Read();                    
+            _mpqArchive = mpqReader.Read();
 
             var replay = new Sc2Replay(path);
             var replayHeader = DecodeReplayHeader();
@@ -43,13 +44,14 @@ namespace s2ProtocolFurry.Decoder
             replay.InitData = Parse.Parse.InitData(initData);
 
             var trackerEvents = DecodeReplayTrackerEvents();
-            replay.TrackerEvents = Parse.Parse.Tracker(trackerEvents);
+            replay.TrackerEvents = _eventDecoder.ParseTracker(trackerEvents);
 
             var replayDetails = DecodeReplayDetails();
             replay.Details = Parse.Parse.Details(replayDetails);
 
             var gameEvents = DecodeReplayGameEvents();
             replay.GameEvents = Parse.Parse.GameEvents(gameEvents);
+            if (replay.TrackerEvents is not { } ev) throw new NullReferenceException();
 
             var metaData = DecodeReplayMetaData();
             replay.MetaData = metaData;
@@ -57,19 +59,63 @@ namespace s2ProtocolFurry.Decoder
             var messages = DecodeReplayMessageEvents();
             Parse.Parse.SetMessages(messages, replay);
 
-            if (replay.TrackerEvents is not null)
-            {
-                replay.TrackerEvents.SUnitBornEvents.ToList().ForEach(f => f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle));
-                replay.TrackerEvents.SUnitInitEvents.ToList().ForEach(f => f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle));
-                replay.TrackerEvents.SUnitDiedEvents.ToList().ForEach(f => f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle));
-                replay.TrackerEvents.SUnitDoneEvents.ToList().ForEach(f => f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle));
-                replay.TrackerEvents.SUnitOwnerChangeEvents.ToList().ForEach(f => f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle));
+            foreach (ref var f in ev.SUnitBornEvents) f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle);
+            foreach (ref var f in ev.SUnitInitEvents) f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle);
+            foreach (ref var f in ev.SUnitDiedEvents) f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle);
+            foreach (ref var f in ev.SUnitDoneEvents) f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle);
+            foreach (ref var f in ev.SUnitOwnerChangeEvents) f.UnitIndex = GetUnitIndex(f.UnitTagIndex, f.UnitTagRecycle);
 
-                Parse.Parse.SetTrackerEventsUnitConnections(replay.TrackerEvents);
-            }
+            Connect(
+                ev.SUnitBornEvents.Data,
+                ev.SUnitDiedEvents.Data,
+                x => x.UnitIndex,
+                x => x.UnitIndex,
+                (a, b) => a.SUnitDiedEvent = b
+            );
+            Connect(
+                ev.SUnitInitEvents.Data,
+                ev.SUnitDiedEvents.Data,
+                x => x.UnitIndex,
+                x => x.UnitIndex,
+                (a, b) => a.SUnitDiedEvent = b
+            );
+            Connect(
+                ev.SUnitInitEvents.Data,
+                ev.SUnitDoneEvents.Data,
+                x => x.UnitIndex,
+                x => x.UnitIndex,
+                (a, b) => a.SUnitDoneEvent = b
+            );
+            Connect(
+                ev.SUnitDiedEvents.Data,
+                ev.SUnitBornEvents.Data,
+                x => (x.KillerUnitTagIndex, x.KillerUnitTagRecycle),
+                x => (x.UnitTagIndex, x.UnitTagRecycle),
+                (a, b) => a.KillerUnitBornEvent = b
+            );
+            Connect(
+                ev.SUnitDiedEvents.Data,
+                ev.SUnitInitEvents.Data,
+                x => (x.KillerUnitTagIndex, x.KillerUnitTagRecycle),
+                x => (x.UnitTagIndex, x.UnitTagRecycle),
+                (a, b) => a.KillerUnitInitEvent = b
+            );
 
             return replay;
+            static void Connect<T1, T2, TKey>(
+                IEnumerable<T1> xs,
+                IEnumerable<T2> ys,
+                Func<T1, TKey> selector1,
+                Func<T2, TKey> selector2,
+                Connector<T1, T2> action)
+            {
+                foreach (var (a, b) in xs.Join(ys, selector1, selector2, ValueTuple.Create))
+                {
+                    action(a, b);
+                }
+            }
         }
+        public delegate void Connector<T1, T2>(T1 a, T2 b);
 
         private Dictionary<string, object> DecodeReplayHeader()
         {
@@ -111,12 +157,12 @@ namespace s2ProtocolFurry.Decoder
 
         private IEnumerable<Dictionary<string, object>> DecodeReplayTrackerEvents()
         {
-            var decoder = new VersionedDecoder(GetListItemContent("replay.tracker.events"), _typeInfos);
-            foreach (var eventItem in _eventDecoder.DecodeEventStream(
-                decoder, EventMappedTypes.TrackerEventIdTypeId, EventMappedTypes.TrackedEventMappedTypes, false))
-            {
-                yield return eventItem;
-            }
+            return _eventDecoder.DecodeEventStream(
+                new VersionedDecoder(GetListItemContent("replay.tracker.events"), _typeInfos),
+                EventMappedTypes.TrackerEventIdTypeId,
+                EventMappedTypes.TrackedEventMappedTypes,
+                false
+            );
         }
 
         private ReplayMetadata DecodeReplayMetaData()
@@ -127,7 +173,7 @@ namespace s2ProtocolFurry.Decoder
 
             if (meta_string != null)
             {
-                return JsonSerializer.Deserialize<ReplayMetadata>(meta_string);               
+                return JsonSerializer.Deserialize<ReplayMetadata>(meta_string);
             }
 
             return null;

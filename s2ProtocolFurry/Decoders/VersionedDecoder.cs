@@ -8,11 +8,11 @@ namespace s2ProtocolFurry.Decoder
     public class VersionedDecoder : BaseDecoder, IDecoder
     {
         private readonly BitPackedBuffer _buffer;
-        private readonly List<ProtocolTypeInfo> _typeInfos;
+        private readonly TypeInfoIdMap _typeInfos;
 
         private readonly DebugLogger _debugOutput = new();
 
-        public VersionedDecoder(byte[] contents, List<ProtocolTypeInfo> typeInfos)
+        public VersionedDecoder(byte[] contents, TypeInfoIdMap typeInfos)
         {
             _buffer = new BitPackedBuffer(contents) { DebugOutput = _debugOutput };
             _typeInfos = typeInfos;
@@ -20,39 +20,15 @@ namespace s2ProtocolFurry.Decoder
 
         public override string ToString() => _buffer.ToString();
 
-        public string GetTypeName(int typeId)
-        {
-            var typeInfo = _typeInfos[typeId];
-            var methodName = typeInfo.Type;
-            return methodName;
-        }
-
         public object? Instance(int typeId)
         {
-            _debugOutput.AppendLine($"{nameof(Instance)}({nameof(typeId)}: {typeId}) // typeName: {GetTypeName(typeId)}");
-            using var guard = _debugOutput.PushIndent();
-            if (typeId >= _typeInfos.Count)
+            if (typeId >= _typeInfos.Length)
             {
                 throw new InvalidOperationException("Corrupted data");
             }
 
             var typeInfo = _typeInfos[typeId];
-            var result = typeInfo switch
-            {
-                ProtocolTypeArray(Int128 arg1, Int128 arg2, Int128 typeid) => Array((int)arg1, (int)typeid),
-                ProtocolTypeBitArray(Int128 arg1, Int128 arg2) => BitArray((int)arg1),
-                ProtocolTypeBlob(Int128 arg1, Int128 arg2) => Blob((int)arg1),
-                ProtocolTypeBool => Bool(),
-                ProtocolTypeChoice(Int128 arg1, Int128 arg2, List<(string Arg1, Int128 Arg2)> arg3) => Choice((int)arg1, (int)arg2, arg3),
-                ProtocolTypeFourcc => FourCC(),
-                ProtocolTypeInt(Int128 arg1, Int128 arg2) => Int((int)arg1),
-                ProtocolTypeNull => Null(),
-                ProtocolTypeOptional(Int128 arg1) => Optional((int)arg1),
-                ProtocolTypeStruct(List<(string Arg1, Int128 Arg2, Int128 Arg3)> arg1) => Struct(arg1),
-                var x => throw new InvalidOperationException($"Unknown method '{x.Type}'")
-            };
-
-            return result;
+            return ReadInstance(typeInfo);
         }
 
         public void ByteAlign()
@@ -101,146 +77,92 @@ namespace s2ProtocolFurry.Decoder
             return negative ? -result : result;
         }
 
-        private object[] Array(int bounds, int typeid)
+        public object ReadInstance<T>(ProtocolTypeInfo_2.ProtocolTypeArray<T> typeInfo) where T : IProtocolTypeInfo
         {
-            _debugOutput.AppendLine($"{nameof(Array)}({nameof(bounds)}: {bounds}, {nameof(typeid)}: {typeid})");
-            using var guard = _debugOutput.PushIndent();
-
             ExpectSkip(0);
             int length = VInt();
             var instances = new object[length];
             for (int i = 0; i < length; i++)
             {
-                instances[i] = Instance(typeid);
+                instances[i] = ReadInstance(typeInfo.Element);
             }
             return instances;
         }
 
-        private Tuple<int, byte[]> BitArray(int bounds)
+        public object ReadInstance(ProtocolTypeInfo_2.ProtocolTypeBitArray typeInfo)
         {
-            _debugOutput.AppendLine($"{nameof(BitArray)}({nameof(bounds)}: {bounds})");
-            return _debugOutput.Indented(() =>
-            {
-                ExpectSkip(1);
-                int length = VInt();
-                return Tuple.Create(length, _buffer.ReadAlignedBytes((length + 7) / 8));
-            });
+            ExpectSkip(1);
+            int length = VInt();
+            return (length, _buffer.ReadAlignedBytes((length + 7) / 8));
         }
 
-        private byte[] Blob(int bounds)
+        public object ReadInstance(ProtocolTypeInfo_2.ProtocolTypeBlob typeInfo)
         {
-            _debugOutput.AppendLine($"{nameof(Blob)}({nameof(bounds)}: {bounds})");
-            return _debugOutput.Indented(() =>
-            {
-                ExpectSkip(2);
-                int length = VInt();
-                return _buffer.ReadAlignedBytes(length);
-            });
+            ExpectSkip(2);
+            int length = VInt();
+            return _buffer.ReadAlignedBytes(length);
         }
 
-        private bool Bool()
+        public object ReadInstance(ProtocolTypeInfo_2.ProtocolTypeBool typeInfo)
         {
-            _debugOutput.AppendLine($"{nameof(Bool)}()");
-            return _debugOutput.Indented(() =>
-            {
-                ExpectSkip(6);
-                return _buffer.ReadBits(8) != 0;
-            });
-        }
-        
-        private Dictionary<string, object> Choice(int mix, int max, List<(string Arg1, Int128 Arg2)> fields)
-        {
-            _debugOutput.AppendLine($"{nameof(Choice)}({nameof(mix)}: {mix}, {nameof(max)}: {max}, {nameof(fields)}: (count: {fields.Count}))");
-            return _debugOutput.Indented(() =>
-            {
-                ExpectSkip(3);
-                int tag = VInt();
-                if (tag < 0 || tag >= fields.Count)
-                {
-                    SkipInstance();
-                    return new Dictionary<string, object>();
-                }
-                var field = fields[tag];
-                return new Dictionary<string, object> { { field.Item1, Instance((int)field.Item2) } };
-            });
+            ExpectSkip(6);
+            return _buffer.ReadBits(8) != 0;
         }
 
-        private byte[] FourCC()
+        public object ReadInstance(ProtocolTypeInfo_2.ProtocolTypeChoice typeInfo)
         {
-            _debugOutput.AppendLine($"{nameof(FourCC)}()");
-            return _debugOutput.Indented(() =>
+            var fields = typeInfo.Fields;
+            ExpectSkip(3);
+            int tag = VInt();
+            if (tag < 0 || tag >= fields.Length)
             {
-                ExpectSkip(7);
-                return _buffer.ReadAlignedBytes(4);
-            });
+                SkipInstance();
+                return new Dictionary<string, object>();
+            }
+            var field = fields[tag];
+            return new Dictionary<string, object> { { field.Name, ReadInstance(field.FieldType) } };
         }
 
-        private int Int(int bounds)
+        public object ReadInstance(ProtocolTypeInfo_2.ProtocolTypeFourcc typeInfo)
         {
-            _debugOutput.AppendLine($"{nameof(Int)}({nameof(bounds)}: {bounds})");
-            using var guard = _debugOutput.PushIndent();
+            ExpectSkip(7);
+            return _buffer.ReadAlignedBytes(4);
+        }
 
+        public object ReadInstance(ProtocolTypeInfo_2.ProtocolTypeInt typeInfo)
+        {
             ExpectSkip(9);
             return VInt();
         }
 
-        private object Null() => null;
+        public object ReadInstance(ProtocolTypeInfo_2.ProtocolTypeNull typeInfo) => null;
 
-        private object? Optional(int typeid)
+        public object ReadInstance<T>(ProtocolTypeInfo_2.ProtocolTypeOptional<T> typeInfo) where T : IProtocolTypeInfo
         {
-            _debugOutput.AppendLine($"{nameof(Optional)}({nameof(typeid)}: {typeid})");
-            using var guard = _debugOutput.PushIndent();
-
             ExpectSkip(4);
             bool exists = _buffer.ReadBits(8) != 0;
-            return exists ? Instance(typeid) : null;
+            return exists ? ReadInstance(typeInfo.Element) : null;
         }
 
-        private float Real32()
+        public object ReadInstance(ProtocolTypeInfo_2.ProtocolTypeStruct typeInfo)
         {
-            _debugOutput.AppendLine($"{nameof(Real32)}()");
-            return _debugOutput.Indented(() =>
-            {
-                ExpectSkip(7);
-                var bytes = _buffer.ReadAlignedBytes(4);
-                return BitConverter.ToSingle(bytes, 0);
-            });
-        }
-
-        private double Real64()
-        {
-            _debugOutput.AppendLine($"{nameof(Real64)}()");
-            return _debugOutput.Indented(() =>
-            {
-                ExpectSkip(8);
-                var bytes = _buffer.ReadAlignedBytes(8);
-                return BitConverter.ToDouble(bytes, 0);
-            });
-        }
-
-        private Dictionary<string, object> Struct(List<(string Item1, Int128 Item2, Int128 Item3)> fields)
-        {
-            _debugOutput.AppendLine($"{nameof(Struct)}({nameof(fields)}: (count: {fields.Count}))");
-            using var guard = _debugOutput.PushIndent();
-
+            var fields = typeInfo.Fields;
             ExpectSkip(5);
             var result = new Dictionary<string, object>();
             int length = VInt();
             for (int i = 0; i < length; i++)
             {
                 int tag = VInt();
-                var fieldIdx = fields.FindIndex(f => f.Item3 == tag);
+                var fieldIdx = Array.FindIndex(fields, f => f.Tag == tag);
 
                 if (fieldIdx >= 0)
                 {
                     var field = fields[fieldIdx];
-                    int fieldTypeId = checked((int)field.Item2);
-
-                    _debugOutput.AppendLine($"[{field.Item1}] = {field.Item2} (TAG: {field.Item3}, TypeName: {GetTypeName(fieldTypeId)})");
+                    var fieldType = ReadInstance(field.FieldType);
                     
-                    if (field.Item1 == "__parent")
+                    if (field.Name == "__parent")
                     {
-                        var parent = Instance(fieldTypeId);
+                        var parent = fieldType;
                         if (parent is Dictionary<string, object> parentDict)
                         {
                             foreach (var kvp in parentDict)
@@ -248,18 +170,18 @@ namespace s2ProtocolFurry.Decoder
                                 result[kvp.Key] = kvp.Value;
                             }
                         }
-                        else if (fields.Count == 1)
+                        else if (fields.Length == 1)
                         {
                             result = (Dictionary<string, object>)parent;
                         }
                         else
                         {
-                            result[field.Item1] = parent;
+                            result[field.Name] = parent;
                         }
                     }
                     else
                     {
-                        result[field.Item1] = Instance(fieldTypeId);
+                        result[field.Name] = fieldType;
                     }
                 }
                 else
@@ -329,5 +251,7 @@ namespace s2ProtocolFurry.Decoder
                 }
             });
         }
+
+        public object ReadInstance(IProtocolTypeInfo typeInfo) => typeInfo.Decode(this);
     }
 }

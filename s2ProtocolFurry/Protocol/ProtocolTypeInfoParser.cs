@@ -84,7 +84,20 @@
         {
             if (!TryExactChar(ref input, expected)) throw new InvalidOperationException();
         }
-        public static List<ProtocolTypeInfo> Parse(ReadOnlySpan<char> input)
+        //public static ResolvedTypeInfoIdMap Resolve(TypeInfoIdMap infos)
+        //{
+        //    int n = infos.Length;
+        //    var map = new IProtocolTypeInfo?[n];
+
+        //    for (int i = 0; i < n; i++)
+        //    {
+        //        var src = infos[i];
+        //        map[i] = src.Transform(infos);
+        //    }
+
+        //    return new ResolvedTypeInfoIdMap(map!);
+        //}
+        public static TypeInfoIdMap Parse(ReadOnlySpan<char> input)
         {
             List<ProtocolTypeInfo> output = new();
 
@@ -135,7 +148,7 @@
                 SkipToNextLine(ref input);
             }
 
-            return output;
+            return new(output);
         }
         public static ProtocolTypeInfo Parse_bool(ref ReadOnlySpan<char> input)
         {

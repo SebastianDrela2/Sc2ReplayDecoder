@@ -6,7 +6,7 @@ namespace s2ProtocolFurry.Protocol
     public class ProtocolImporter
     {
         private readonly string[] _protocols;
-        private readonly Dictionary<string, List<ProtocolTypeInfo>> _typeInfosDictionary = new();
+        private readonly Dictionary<string, TypeInfoIdMap> _typeInfosDictionary = new();
 
         public ProtocolImporter(string basePath)
         {
@@ -16,7 +16,8 @@ namespace s2ProtocolFurry.Protocol
 
             foreach(var protocol in _protocols)
             {
-                var parsed = ProtocolTypeInfoParser.Parse(File.ReadAllText(protocol));               
+                var parsed = ProtocolTypeInfoParser.Parse(File.ReadAllText(protocol));
+                //ProtocolTypeInfoParser.Resolve(parsed);
                 _typeInfosDictionary.Add(
                     protocol,
                     parsed
@@ -24,7 +25,7 @@ namespace s2ProtocolFurry.Protocol
             }
         }
 
-        public List<ProtocolTypeInfo> GetTypeInfos(int? protocolNumber = null)
+        public TypeInfoIdMap GetTypeInfos(int? protocolNumber = null)
         {
             if (protocolNumber is null)
             {

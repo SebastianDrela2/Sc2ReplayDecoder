@@ -14,7 +14,7 @@ namespace s2ProtocolFurry.Decoder
         private readonly EventDecoder _eventDecoder;
         private MPQArchive.MPQ.ReceivedData.MPQArchive _mpqArchive;              
 
-        private List<ProtocolTypeInfo> _typeInfos;
+        private TypeInfoIdMap _typeInfos;
 
         public Sc2ReplayDecoder(string protocolVersionsDir)
         {          
@@ -25,19 +25,24 @@ namespace s2ProtocolFurry.Decoder
         }
 
         public Sc2Replay DecodeSc2Replay(string path)
-        {           
-            using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        {
+            var bytes = File.ReadAllBytes(path);
+            using var stream = new MemoryStream(bytes);
 
+            return DecodeSc2Replay(stream);
+        }
+        public Sc2Replay DecodeSc2Replay(Stream stream)
+        {
             var mpqReader = new MPQReader(stream);
             _mpqArchive = mpqReader.Read();                    
 
-            var replay = new Sc2Replay(path);
+            var replay = new Sc2Replay();
             var replayHeader = DecodeReplayHeader();
 
             var version = replayHeader["m_version"] as Dictionary<string, object>;
-            var baseBuild = version["m_baseBuild"];
+            var baseBuild = (int)version["m_baseBuild"];
 
-            _typeInfos = _protocolImporter.GetTypeInfos(90870);
+            _typeInfos = _protocolImporter.GetTypeInfos(baseBuild);
 
             var initData = DecodeReplayInitData();
             replay.InitData = Parse.Parse.InitData(initData);
